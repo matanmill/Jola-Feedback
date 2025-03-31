@@ -1,226 +1,196 @@
 
-import React, { useState, useEffect } from 'react';
-import { useInsightsData, Insight } from '@/hooks/use-insights-data';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Loader2, Lightbulb, MessageSquare, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import FeedbackFilters, { FilterOptions } from '@/components/filters/FeedbackFilters';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useFeedbackData } from '@/hooks/use-feedback-data';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useInsightsData } from '@/hooks/use-insights-data';
+import { useToast } from '@/components/ui/use-toast';
+import FeedbackFilters from '@/components/filters/FeedbackFilters';
 
 const Insights = () => {
-  const { toast } = useToast();
-  const { insights, isLoading, error } = useInsightsData();
-  const { feedbacks } = useFeedbackData();
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const { 
+    insightItems, 
+    isLoading, 
+    isError, 
+    selectedInsight, 
+    setSelectedInsight,
+    fetchRelatedFeedbacks,
+    isFiltering,
+    setIsFiltering
+  } = useInsightsData(filters);
   
-  // State for filters
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
-  const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
-  const [selectedSentiment, setSelectedSentiment] = useState<string | null>(null);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    sources: [],
-    segments: [],
-    sentiments: []
-  });
+  const [relatedFeedbacks, setRelatedFeedbacks] = useState<any[]>([]);
+  const [isLoadingRelated, setIsLoadingRelated] = useState(false);
+  const { toast } = useToast();
 
-  // State for insight detail dialog
-  const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-
-  useEffect(() => {
-    if (feedbacks.length > 0) {
-      const uniqueSources = Array.from(
-        new Set(feedbacks.map(feedback => feedback.source))
-      ).filter(Boolean) as string[];
-      
-      const uniqueSegments = Array.from(
-        new Set(feedbacks.map(feedback => feedback.segment))
-      ).filter(Boolean) as string[];
-      
-      const uniqueSentiments = Array.from(
-        new Set(feedbacks.map(feedback => feedback.sentiment))
-      ).filter(Boolean) as string[];
-      
-      setFilterOptions({
-        sources: uniqueSources,
-        segments: uniqueSegments,
-        sentiments: uniqueSentiments
-      });
-    }
-  }, [feedbacks]);
-
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error loading insights",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
-  const handleFilterChange = (type: 'source' | 'segment' | 'sentiment', value: string | null) => {
-    if (type === 'source') setSelectedSource(value);
-    if (type === 'segment') setSelectedSegment(value);
-    if (type === 'sentiment') setSelectedSentiment(value);
-  };
-
-  const handleInsightClick = (insight: Insight) => {
+  const handleInsightClick = async (insight: any) => {
     setSelectedInsight(insight);
-    setIsDetailOpen(true);
+    setIsLoadingRelated(true);
+    
+    try {
+      const feedbacks = await fetchRelatedFeedbacks(insight.id);
+      setRelatedFeedbacks(feedbacks);
+    } catch (error) {
+      console.error("Error fetching related feedbacks:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load related feedbacks. Please try again."
+      });
+    } finally {
+      setIsLoadingRelated(false);
+    }
   };
 
-  // Apply filters to insights
-  // Note: We can't directly filter insights by these properties, but we can filter
-  // by related feedbacks that match these criteria
-  const filteredInsights = insights.filter(insight => {
-    // If no filters are selected, show all insights
-    if (!selectedSource && !selectedSegment && !selectedSentiment) {
-      return true;
-    }
-    
-    // If this insight has related feedbacks, check if any match the filters
-    if (insight.related_feedbacks && insight.related_feedbacks.length > 0) {
-      return insight.related_feedbacks.some(feedback => {
-        const sourceMatch = !selectedSource || feedback.source === selectedSource;
-        const segmentMatch = !selectedSegment || feedback.segment === selectedSegment;
-        const sentimentMatch = !selectedSentiment || feedback.sentiment === selectedSentiment;
-        return sourceMatch && segmentMatch && sentimentMatch;
-      });
-    }
-    
-    // If no related feedbacks or none match, don't include this insight
-    return false;
-  });
+  const handleCloseDialog = () => {
+    setSelectedInsight(null);
+    setRelatedFeedbacks([]);
+  };
 
-  const getSentimentColor = (sentiment: string) => {
-    switch (sentiment?.toLowerCase()) {
-      case 'positive':
-        return 'bg-sentiment-positive text-white';
-      case 'negative':
-        return 'bg-sentiment-negative text-white';
-      case 'mixed':
-        return 'bg-sentiment-mixed text-white';
-      default:
-        return 'bg-gray-400 text-white';
-    }
+  const applyFilters = (newFilters: Record<string, string>) => {
+    setFilters(newFilters);
+    setIsFiltering(Object.values(newFilters).some(value => value !== '' && value !== 'all'));
+  };
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Card className="w-full max-w-md p-6">
+          <CardContent className="text-center space-y-4">
+            <h3 className="text-xl font-semibold text-destructive">Error Loading Data</h3>
+            <p className="text-gray-600">Failed to load insights. Please try again later.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // For insights, we assume they don't have direct source/segment properties 
+  // but we still want to support filtering through related feedbacks
+  const filterOptions = {
+    source: ['All'],  // Default options if needed
+    segment: ['All'], 
+    sentiment: ['All', 'positive', 'neutral', 'negative']
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Insights</h2>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">Insights</h2>
         <FeedbackFilters 
-          options={filterOptions}
-          onFilterChange={handleFilterChange}
-          selectedSource={selectedSource}
-          selectedSegment={selectedSegment}
-          selectedSentiment={selectedSentiment}
+          filterOptions={filterOptions}
+          onApplyFilters={applyFilters}
+          isFiltering={isFiltering}
         />
       </div>
-      
+
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : filteredInsights.length === 0 ? (
-        <div className="p-8 text-center border rounded-lg bg-muted/30">
-          <h3 className="text-xl font-medium text-muted-foreground">No insights found</h3>
-          <p className="text-muted-foreground mt-2">
-            Try adjusting your filters or check back later.
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredInsights.map(insight => (
-            <Card 
-              key={insight.id} 
-              className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-              onClick={() => handleInsightClick(insight)}
-            >
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Lightbulb className="h-5 w-5 text-amber-500" />
-                <CardTitle className="text-lg">Insight #{insight.id}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 line-clamp-3">
-                  {insight.content || 'No content available for this insight.'}
-                </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardContent className="p-4">
+                <Skeleton className="h-7 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-2/3" />
               </CardContent>
-              <CardFooter className="pt-2 flex justify-between items-center border-t border-gray-100">
-                <Badge variant="outline" className="bg-gray-50">
-                  {new Date(insight.created_at).toLocaleDateString()}
-                </Badge>
-                
-                {insight.related_feedbacks && insight.related_feedbacks.length > 0 && (
-                  <Badge variant="outline" className="flex items-center gap-1 bg-primary/10 text-primary">
-                    <MessageSquare className="h-3 w-3" />
-                    {insight.related_feedbacks.length} related
-                  </Badge>
-                )}
-              </CardFooter>
             </Card>
           ))}
         </div>
+      ) : insightItems.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {insightItems.map((item) => (
+            <Card 
+              key={item.id} 
+              className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleInsightClick(item)}
+            >
+              <CardContent className="p-4">
+                <h3 className="font-medium text-lg line-clamp-1">{item.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{item.content}</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <Badge variant={
+                    item.sentiment === 'positive' ? 'success' : 
+                    item.sentiment === 'negative' ? 'destructive' : 'secondary'
+                  }>
+                    {item.sentiment || 'neutral'}
+                  </Badge>
+                  {item.relatedFeedbackIds && (
+                    <Badge variant="outline">{item.relatedFeedbackIds.length} Feedbacks</Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center space-y-2">
+            <h3 className="text-lg font-medium">No Insights Found</h3>
+            <p className="text-sm text-muted-foreground">
+              {isFiltering ? "Try adjusting your filters" : "Add some insights to get started"}
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Insight Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          {selectedInsight && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-xl">
-                  <Lightbulb className="h-5 w-5 text-amber-500" />
-                  Insight #{selectedInsight.id}
-                </DialogTitle>
-                <DialogDescription>
-                  {new Date(selectedInsight.created_at).toLocaleDateString()}
-                </DialogDescription>
-              </DialogHeader>
+      <Dialog open={!!selectedInsight} onOpenChange={(open) => !open && handleCloseDialog()}>
+        {selectedInsight && (
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold">{selectedInsight.title}</DialogTitle>
+              <DialogDescription className="text-base font-normal text-foreground mt-2">
+                {selectedInsight.content}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-6">
+              <h4 className="text-lg font-medium mb-3">Related Feedbacks</h4>
               
-              <div className="space-y-4 mt-4">
-                <Card className="border-0 shadow-sm">
-                  <CardContent className="pt-6">
-                    <p className="whitespace-pre-line">
-                      {selectedInsight.content || 'No content available for this insight.'}
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                {selectedInsight.related_feedbacks && selectedInsight.related_feedbacks.length > 0 ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Related Feedback</h3>
-                    <div className="grid gap-3">
-                      {selectedInsight.related_feedbacks.map(feedback => (
-                        <Card key={feedback.id} className="border-0 shadow-sm">
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <CardTitle className="text-base">{feedback.title}</CardTitle>
-                              <Badge className={getSentimentColor(feedback.sentiment)}>
-                                {feedback.sentiment}
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-sm text-gray-700">{feedback.content}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center p-4 bg-gray-50 rounded-md">
-                    <p className="text-muted-foreground">No related feedback found.</p>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
+              {isLoadingRelated ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i} className="overflow-hidden">
+                      <CardContent className="p-4">
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-full mb-1" />
+                        <Skeleton className="h-4 w-2/3" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : relatedFeedbacks.length > 0 ? (
+                <div className="space-y-3">
+                  {relatedFeedbacks.map((feedback) => (
+                    <Card key={feedback.id} className="overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="space-x-2">
+                            <Badge>{feedback.source || 'Unknown'}</Badge>
+                            <Badge variant="outline">{feedback.segment || 'General'}</Badge>
+                          </div>
+                          <Badge variant={
+                            feedback.sentiment === 'positive' ? 'success' : 
+                            feedback.sentiment === 'negative' ? 'destructive' : 'secondary'
+                          }>
+                            {feedback.sentiment || 'neutral'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm mt-2">{feedback.content}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No related feedbacks found.</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        )}
       </Dialog>
     </div>
   );

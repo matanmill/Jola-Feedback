@@ -1,60 +1,79 @@
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Feedback } from '@/types/feedback';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-export function useFeedbackData() {
-  const fetchFeedbacks = async (): Promise<Feedback[]> => {
-    console.log('Fetching feedback data from Supabase');
-    
-    try {
-      const { data, error } = await supabase
-        .from('feedbacks')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching feedback data:', error);
-        throw new Error(error.message || 'Failed to fetch feedback data');
+export type FeedbackItem = {
+  id: number;
+  content: string;
+  source: string;
+  segment: string;
+  sentiment: string;
+  createdAt: string;
+  customerId: number;
+};
+
+export const useFeedbackData = (filters: Record<string, string>) => {
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  const fetchFeedbackData = async (): Promise<FeedbackItem[]> => {
+    let query = supabase.from("feedbacks").select("*");
+
+    // Apply filters if they exist
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== "all") {
+        query = query.eq(key, value);
       }
-      
-      console.log(`Successfully fetched ${data?.length} feedbacks`);
-      
-      // Transform data to match Feedback type if needed
-      const formattedData: Feedback[] = data?.map(item => ({
-        id: item.feedback_id,
-        title: item.content.substring(0, 50) + (item.content.length > 50 ? '...' : ''),
-        content: item.content || '',
-        source: item.source || 'Unknown',
-        sentiment: item.sentiment || 'neutral',
-        segment: item.segment || '',
-        client: 'Jola', // Default client 
-        created_at: item.created_at || new Date().toISOString()
-      })) || [];
-      
-      return formattedData;
-    } catch (error) {
-      console.error('Exception fetching feedback data:', error);
-      throw error;
+    });
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching feedback data:", error);
+      throw new Error("Failed to fetch feedback data");
     }
+
+    // Map the data to our FeedbackItem type
+    return (data || []).map((item) => ({
+      id: item.feedback_key,
+      content: item.content || "",
+      source: item.source || "",
+      segment: item.segment || "",
+      sentiment: item.sentiment || "",
+      createdAt: item["Creation Date"] || new Date().toISOString(),
+      customerId: item.customer_id || 0,
+    }));
   };
 
   const {
-    data = [],
+    data: feedbackItems,
     isLoading,
-    error,
-    refetch
+    isError,
+    refetch,
   } = useQuery({
-    queryKey: ['feedbacks'],
-    queryFn: fetchFeedbacks,
-    retry: 1,
+    queryKey: ["feedbackData", filters],
+    queryFn: fetchFeedbackData,
   });
 
-  return {
-    feedbacks: data,
-    isLoading,
-    error,
-    refetch
+  const filterOptions = {
+    source: Array.from(
+      new Set(feedbackItems?.map((item) => item.source) || [])
+    ).filter(Boolean),
+    segment: Array.from(
+      new Set(feedbackItems?.map((item) => item.segment) || [])
+    ).filter(Boolean),
+    sentiment: Array.from(
+      new Set(feedbackItems?.map((item) => item.sentiment) || [])
+    ).filter(Boolean),
   };
-}
+
+  return {
+    feedbackItems: feedbackItems || [],
+    isLoading,
+    isError,
+    refetch,
+    filterOptions,
+    isFiltering,
+    setIsFiltering,
+  };
+};
