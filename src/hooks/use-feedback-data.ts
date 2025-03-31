@@ -20,7 +20,20 @@ export function useFeedbackData() {
       }
       
       console.log(`Successfully fetched ${data?.length} feedbacks`);
-      return data || [];
+      
+      // Transform data to match Feedback type if needed
+      const formattedData: Feedback[] = data?.map(item => ({
+        id: item.id || item.feedback_id,
+        title: item.title || 'Untitled Feedback',
+        content: item.content || '',
+        source: item.source || 'Unknown',
+        sentiment: item.sentiment || 'neutral',
+        segment: item.segment || '',
+        client: item.client || '',
+        created_at: item.created_at || new Date().toISOString()
+      })) || [];
+      
+      return formattedData;
     } catch (error) {
       console.error('Exception fetching feedback data:', error);
       throw error;

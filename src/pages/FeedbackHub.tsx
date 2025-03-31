@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FeedbackRepository from '@/components/feedback-hub/FeedbackRepository';
 import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/hooks/use-toast';
@@ -22,9 +21,9 @@ const FeedbackHub = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Feedback Hub</h1>
+        <h1 className="text-3xl font-bold">Feedback Repository</h1>
         <button
           onClick={toggleDebugMode}
           className={`px-4 py-2 rounded-md transition-colors ${
@@ -37,29 +36,7 @@ const FeedbackHub = () => {
         </button>
       </div>
       
-      <Tabs defaultValue="repository" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 lg:w-[400px]">
-          <TabsTrigger value="repository">Feedback Repository</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="repository">
-          <FeedbackRepository isDebugMode={isDebugMode} />
-        </TabsContent>
-        
-        <TabsContent value="analytics">
-          <div className="p-6 text-center border rounded-lg bg-gray-50">
-            <h3 className="text-xl font-medium text-gray-500">Analytics coming soon</h3>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="settings">
-          <div className="p-6 text-center border rounded-lg bg-gray-50">
-            <h3 className="text-xl font-medium text-gray-500">Settings coming soon</h3>
-          </div>
-        </TabsContent>
-      </Tabs>
+      <FeedbackRepository isDebugMode={isDebugMode} />
     </div>
   );
 };

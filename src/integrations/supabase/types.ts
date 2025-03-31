@@ -63,6 +63,7 @@ export type Database = {
           created_at: string
           feedback_id: number
           segment: string | null
+          sentiment: string | null
           user_id: number
         }
         Insert: {
@@ -70,6 +71,7 @@ export type Database = {
           created_at?: string
           feedback_id?: number
           segment?: string | null
+          sentiment?: string | null
           user_id: number
         }
         Update: {
@@ -77,6 +79,7 @@ export type Database = {
           created_at?: string
           feedback_id?: number
           segment?: string | null
+          sentiment?: string | null
           user_id?: number
         }
         Relationships: []
