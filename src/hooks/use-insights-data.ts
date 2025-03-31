@@ -6,6 +6,12 @@ export interface Insight {
   id: number;
   content: string;
   created_at: string;
+  related_feedbacks?: {
+    id: number;
+    title: string;
+    content: string;
+    sentiment: string;
+  }[];
 }
 
 export function useInsightsData() {
@@ -13,24 +19,61 @@ export function useInsightsData() {
     console.log('Fetching insights data from Supabase');
     
     try {
-      const { data, error } = await supabase
+      // First fetch the insights
+      const { data: insightsData, error: insightsError } = await supabase
         .from('insights')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) {
-        console.error('Error fetching insights data:', error);
-        throw new Error(error.message || 'Failed to fetch insights data');
+      if (insightsError) {
+        console.error('Error fetching insights data:', insightsError);
+        throw new Error(insightsError.message || 'Failed to fetch insights data');
       }
       
-      console.log(`Successfully fetched ${data?.length} insights`);
+      console.log(`Successfully fetched ${insightsData?.length} insights`);
       
-      // Transform data
-      const formattedData: Insight[] = data?.map(item => ({
-        id: item.insight_id,
-        content: item.content || '',
-        created_at: item.created_at
-      })) || [];
+      // Then fetch the relationships between insights and feedbacks
+      const { data: relationships, error: relError } = await supabase
+        .from('insights_feedbacks')
+        .select('*');
+      
+      if (relError) {
+        console.error('Error fetching relationships:', relError);
+      }
+      
+      // Then fetch the feedbacks to get their details
+      const { data: feedbacksData, error: feedbacksError } = await supabase
+        .from('feedbacks')
+        .select('*');
+      
+      if (feedbacksError) {
+        console.error('Error fetching feedbacks data:', feedbacksError);
+      }
+      
+      // Map the insights with their related feedbacks
+      const formattedData: Insight[] = insightsData?.map(insight => {
+        // Find relationships for this insight
+        const relatedFeedbackIds = relationships
+          ?.filter(rel => rel.insight_key === insight.insight_key)
+          .map(rel => rel.feedback_key) || [];
+        
+        // Get the related feedback details
+        const relatedFeedbacks = feedbacksData
+          ?.filter(feedback => relatedFeedbackIds.includes(feedback.feedback_key))
+          .map(feedback => ({
+            id: feedback.feedback_key,
+            title: feedback.content?.substring(0, 50) + (feedback.content?.length > 50 ? '...' : '') || 'No title',
+            content: feedback.content || '',
+            sentiment: feedback.sentiment || 'neutral',
+          }));
+        
+        return {
+          id: insight.insight_key,
+          content: insight.content || '',
+          created_at: insight.created_at || new Date().toISOString(),
+          related_feedbacks: relatedFeedbacks || []
+        };
+      }) || [];
       
       return formattedData;
     } catch (error) {
