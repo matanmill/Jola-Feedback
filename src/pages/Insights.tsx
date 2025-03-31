@@ -1,97 +1,70 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import React, { useState, useEffect } from 'react';
 import { useInsightsData } from '@/hooks/use-insights-data';
-import { useToast } from '@/components/ui/use-toast';
-import FeedbackFilters from '@/components/filters/FeedbackFilters';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Lightbulb } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import FeedbackFilters, { FilterOptions } from '@/components/filters/FeedbackFilters';
+import { useFeedbackData } from '@/hooks/use-feedback-data';
 
 const Insights = () => {
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+  const { insights, isLoading, error } = useInsightsData();
+  const { feedbacks } = useFeedbackData();
+  
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
   const [selectedSentiment, setSelectedSentiment] = useState<string | null>(null);
-  
-  const { 
-    insightItems, 
-    isLoading, 
-    isError, 
-    selectedInsight, 
-    setSelectedInsight,
-    fetchRelatedFeedbacks,
-    isFiltering,
-    setIsFiltering
-  } = useInsightsData(filters);
-  
-  const [relatedFeedbacks, setRelatedFeedbacks] = useState<any[]>([]);
-  const [isLoadingRelated, setIsLoadingRelated] = useState(false);
-  const { toast } = useToast();
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    sources: [],
+    segments: [],
+    sentiments: []
+  });
 
-  const handleInsightClick = async (insight: any) => {
-    setSelectedInsight(insight);
-    setIsLoadingRelated(true);
-    
-    try {
-      const feedbacks = await fetchRelatedFeedbacks(insight.id);
-      setRelatedFeedbacks(feedbacks);
-    } catch (error) {
-      console.error("Error fetching related feedbacks:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load related feedbacks. Please try again."
+  useEffect(() => {
+    if (feedbacks.length > 0) {
+      const uniqueSources = Array.from(
+        new Set(feedbacks.map(feedback => feedback.source))
+      ).filter(Boolean) as string[];
+      
+      const uniqueSegments = Array.from(
+        new Set(feedbacks.map(feedback => feedback.segment))
+      ).filter(Boolean) as string[];
+      
+      const uniqueSentiments = Array.from(
+        new Set(feedbacks.map(feedback => feedback.sentiment))
+      ).filter(Boolean) as string[];
+      
+      setFilterOptions({
+        sources: uniqueSources,
+        segments: uniqueSegments,
+        sentiments: uniqueSentiments
       });
-    } finally {
-      setIsLoadingRelated(false);
     }
-  };
+  }, [feedbacks]);
 
-  const handleCloseDialog = () => {
-    setSelectedInsight(null);
-    setRelatedFeedbacks([]);
-  };
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error loading insights",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const handleFilterChange = (type: 'source' | 'segment' | 'sentiment', value: string | null) => {
     if (type === 'source') setSelectedSource(value);
     if (type === 'segment') setSelectedSegment(value);
     if (type === 'sentiment') setSelectedSentiment(value);
-    
-    // Update filters for API calls
-    const newFilters: Record<string, string> = {};
-    if (type === 'source' ? value : selectedSource) newFilters.source = type === 'source' ? value || '' : selectedSource || '';
-    if (type === 'segment' ? value : selectedSegment) newFilters.segment = type === 'segment' ? value || '' : selectedSegment || '';
-    if (type === 'sentiment' ? value : selectedSentiment) newFilters.sentiment = type === 'sentiment' ? value || '' : selectedSentiment || '';
-    
-    setFilters(newFilters);
-    setIsFiltering(Object.values(newFilters).some(value => value !== ''));
   };
 
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Card className="w-full max-w-md p-6">
-          <CardContent className="text-center space-y-4">
-            <h3 className="text-xl font-semibold text-destructive">Error Loading Data</h3>
-            <p className="text-gray-600">Failed to load insights. Please try again later.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Default filter options in case the data isn't loaded yet
-  const filterOptions = {
-    sources: ['Customer Support', 'Social Media', 'Surveys'].filter(Boolean),
-    segments: ['Enterprise', 'SMB', 'Consumer'].filter(Boolean),
-    sentiments: ['positive', 'neutral', 'negative'].filter(Boolean)
-  };
+  const filteredInsights = insights;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Insights</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold tracking-tight">Insights</h2>
         <FeedbackFilters 
           options={filterOptions}
           onFilterChange={handleFilterChange}
@@ -100,113 +73,42 @@ const Insights = () => {
           selectedSentiment={selectedSentiment}
         />
       </div>
-
+      
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="overflow-hidden">
-              <CardContent className="p-4">
-                <Skeleton className="h-7 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-full mb-1" />
-                <Skeleton className="h-4 w-full mb-1" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : insightItems.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {insightItems.map((item) => (
-            <Card 
-              key={item.id} 
-              className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleInsightClick(item)}
-            >
-              <CardContent className="p-4">
-                <h3 className="font-medium text-lg line-clamp-1">{item.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{item.content}</p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Badge variant={
-                    item.sentiment === 'positive' ? 'default' : 
-                    item.sentiment === 'negative' ? 'destructive' : 'secondary'
-                  }>
-                    {item.sentiment || 'neutral'}
-                  </Badge>
-                  {item.relatedFeedbackIds && (
-                    <Badge variant="outline">{item.relatedFeedbackIds.length} Feedbacks</Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      ) : filteredInsights.length === 0 ? (
+        <div className="p-8 text-center border rounded-lg bg-muted/30">
+          <h3 className="text-xl font-medium text-muted-foreground">No insights found</h3>
+          <p className="text-muted-foreground mt-2">
+            Insights will be generated based on feedback analysis.
+          </p>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center space-y-2">
-            <h3 className="text-lg font-medium">No Insights Found</h3>
-            <p className="text-sm text-muted-foreground">
-              {isFiltering ? "Try adjusting your filters" : "Add some insights to get started"}
-            </p>
-          </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {filteredInsights.map(insight => (
+            <Card key={insight.id} className="border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center gap-2 pb-2">
+                <Lightbulb className="h-5 w-5 text-amber-500" />
+                <CardTitle className="text-lg">Insight #{insight.id}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700">
+                  {insight.content || 'No content available for this insight.'}
+                </p>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex justify-between items-center">
+                    <Badge variant="outline" className="bg-gray-50">
+                      {new Date(insight.created_at).toLocaleDateString()}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
-
-      <Dialog open={!!selectedInsight} onOpenChange={(open) => !open && handleCloseDialog()}>
-        {selectedInsight && (
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-semibold">{selectedInsight.title}</DialogTitle>
-              <DialogDescription className="text-base font-normal text-foreground mt-2">
-                {selectedInsight.content}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="mt-6">
-              <h4 className="text-lg font-medium mb-3">Related Feedbacks</h4>
-              
-              {isLoadingRelated ? (
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, i) => (
-                    <Card key={i} className="overflow-hidden">
-                      <CardContent className="p-4">
-                        <Skeleton className="h-6 w-3/4 mb-2" />
-                        <Skeleton className="h-4 w-full mb-1" />
-                        <Skeleton className="h-4 w-2/3" />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : relatedFeedbacks.length > 0 ? (
-                <div className="space-y-3">
-                  {relatedFeedbacks.map((feedback) => (
-                    <Card key={feedback.id} className="overflow-hidden">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="space-x-2">
-                            <Badge>{feedback.source || 'Unknown'}</Badge>
-                            <Badge variant="outline">{feedback.segment || 'General'}</Badge>
-                          </div>
-                          <Badge variant={
-                            feedback.sentiment === 'positive' ? 'default' : 
-                            feedback.sentiment === 'negative' ? 'destructive' : 'secondary'
-                          }>
-                            {feedback.sentiment || 'neutral'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm mt-2">{feedback.content}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No related feedbacks found.</p>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
     </div>
   );
 };

@@ -11,196 +11,97 @@ export type Database = {
     Tables: {
       action_items: {
         Row: {
-          actionitem_key: number
-          content: string | null
+          action_item_id: number
+          content: string
+          created_at: string
         }
         Insert: {
-          actionitem_key: number
-          content?: string | null
+          action_item_id?: number
+          content: string
+          created_at?: string
         }
         Update: {
-          actionitem_key?: number
-          content?: string | null
+          action_item_id?: number
+          content?: string
+          created_at?: string
         }
         Relationships: []
       }
-      actionitems_insights: {
+      actionitems_feedbacks: {
         Row: {
-          actionitem_key: number
-          insight_key: number
+          action_item_id: number
+          feedback_id: number
         }
         Insert: {
-          actionitem_key: number
-          insight_key: number
+          action_item_id: number
+          feedback_id: number
         }
         Update: {
-          actionitem_key?: number
-          insight_key?: number
+          action_item_id?: number
+          feedback_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "actionitems_insights_actionitem_key_fkey"
-            columns: ["actionitem_key"]
+            foreignKeyName: "actionitems_feedbacks_action_item_id_fkey"
+            columns: ["action_item_id"]
             isOneToOne: false
             referencedRelation: "action_items"
-            referencedColumns: ["actionitem_key"]
+            referencedColumns: ["action_item_id"]
           },
           {
-            foreignKeyName: "actionitems_insights_insight_key_fkey"
-            columns: ["insight_key"]
+            foreignKeyName: "actionitems_feedbacks_feedback_id_fkey"
+            columns: ["feedback_id"]
             isOneToOne: false
-            referencedRelation: "insights"
-            referencedColumns: ["insight_key"]
-          },
-        ]
-      }
-      actionitems_labels: {
-        Row: {
-          actionitem_key: number
-          label_key: number
-        }
-        Insert: {
-          actionitem_key: number
-          label_key: number
-        }
-        Update: {
-          actionitem_key?: number
-          label_key?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "actionitems_labels_actionitem_key_fkey"
-            columns: ["actionitem_key"]
-            isOneToOne: false
-            referencedRelation: "action_items"
-            referencedColumns: ["actionitem_key"]
-          },
-          {
-            foreignKeyName: "actionitems_labels_label_key_fkey"
-            columns: ["label_key"]
-            isOneToOne: false
-            referencedRelation: "labels"
-            referencedColumns: ["label_key"]
+            referencedRelation: "feedbacks"
+            referencedColumns: ["feedback_id"]
           },
         ]
       }
       feedbacks: {
         Row: {
-          content: string | null
-          "Creation Date": string | null
-          customer_id: number | null
-          feedback_key: number
+          content: string
+          created_at: string
+          feedback_id: number
           segment: string | null
           sentiment: string | null
           source: string | null
+          user_id: number
         }
         Insert: {
-          content?: string | null
-          "Creation Date"?: string | null
-          customer_id?: number | null
-          feedback_key: number
+          content: string
+          created_at?: string
+          feedback_id?: number
           segment?: string | null
           sentiment?: string | null
           source?: string | null
+          user_id: number
         }
         Update: {
-          content?: string | null
-          "Creation Date"?: string | null
-          customer_id?: number | null
-          feedback_key?: number
+          content?: string
+          created_at?: string
+          feedback_id?: number
           segment?: string | null
           sentiment?: string | null
           source?: string | null
+          user_id?: number
         }
         Relationships: []
-      }
-      insight_labels: {
-        Row: {
-          insight_key: number
-          label_key: number
-        }
-        Insert: {
-          insight_key: number
-          label_key: number
-        }
-        Update: {
-          insight_key?: number
-          label_key?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "insight_labels_insight_key_fkey"
-            columns: ["insight_key"]
-            isOneToOne: false
-            referencedRelation: "insights"
-            referencedColumns: ["insight_key"]
-          },
-          {
-            foreignKeyName: "insight_labels_label_key_fkey"
-            columns: ["label_key"]
-            isOneToOne: false
-            referencedRelation: "labels"
-            referencedColumns: ["label_key"]
-          },
-        ]
       }
       insights: {
         Row: {
           content: string | null
-          insight_key: number
+          created_at: string
+          insight_id: number
         }
         Insert: {
           content?: string | null
-          insight_key: number
+          created_at?: string
+          insight_id?: number
         }
         Update: {
           content?: string | null
-          insight_key?: number
-        }
-        Relationships: []
-      }
-      insights_feedbacks: {
-        Row: {
-          feedback_key: number
-          insight_key: number
-        }
-        Insert: {
-          feedback_key: number
-          insight_key: number
-        }
-        Update: {
-          feedback_key?: number
-          insight_key?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "insights_feedbacks_feedback_key_fkey"
-            columns: ["feedback_key"]
-            isOneToOne: false
-            referencedRelation: "feedbacks"
-            referencedColumns: ["feedback_key"]
-          },
-          {
-            foreignKeyName: "insights_feedbacks_insight_key_fkey"
-            columns: ["insight_key"]
-            isOneToOne: false
-            referencedRelation: "insights"
-            referencedColumns: ["insight_key"]
-          },
-        ]
-      }
-      labels: {
-        Row: {
-          label: string | null
-          label_key: number
-        }
-        Insert: {
-          label?: string | null
-          label_key: number
-        }
-        Update: {
-          label?: string | null
-          label_key?: number
+          created_at?: string
+          insight_id?: number
         }
         Relationships: []
       }

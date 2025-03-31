@@ -1,132 +1,59 @@
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-export type InsightItem = {
+export interface Insight {
   id: number;
-  title: string;
   content: string;
-  sentiment: string;
-  relatedFeedbackIds: number[];
-};
+  created_at: string;
+}
 
-export const useInsightsData = (filters: Record<string, string>) => {
-  const [selectedInsight, setSelectedInsight] = useState<InsightItem | null>(null);
-  const [isFiltering, setIsFiltering] = useState(false);
-
-  // Fetch insights data
-  const fetchInsightsData = async (): Promise<InsightItem[]> => {
-    let query = supabase.from("insights").select("*");
-
-    // Apply filters if they exist
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== "all") {
-        // For insights, we have to handle filtering differently
-        // We'll filter related feedbacks after fetching
-        if (key !== "source" && key !== "segment" && key !== "sentiment") {
-          query = query.eq(key, value);
-        }
+export function useInsightsData() {
+  const fetchInsights = async (): Promise<Insight[]> => {
+    console.log('Fetching insights data from Supabase');
+    
+    try {
+      const { data, error } = await supabase
+        .from('insights')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching insights data:', error);
+        throw new Error(error.message || 'Failed to fetch insights data');
       }
-    });
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Error fetching insights data:", error);
-      throw new Error("Failed to fetch insights data");
+      
+      console.log(`Successfully fetched ${data?.length} insights`);
+      
+      // Transform data
+      const formattedData: Insight[] = data?.map(item => ({
+        id: item.insight_id,
+        content: item.content || '',
+        created_at: item.created_at
+      })) || [];
+      
+      return formattedData;
+    } catch (error) {
+      console.error('Exception fetching insights data:', error);
+      throw error;
     }
-
-    // Get related feedbacks for each insight
-    const insightsWithRelatedFeedbacks = await Promise.all(
-      (data || []).map(async (insight) => {
-        const { data: relatedData, error: relatedError } = await supabase
-          .from("insights_feedbacks")
-          .select("feedback_key")
-          .eq("insight_key", insight.insight_key);
-
-        if (relatedError) {
-          console.error("Error fetching related feedbacks:", relatedError);
-          return {
-            id: insight.insight_key,
-            title: insight.content?.split("\n")[0] || "No title",
-            content: insight.content || "",
-            sentiment: "neutral", // Default sentiment
-            relatedFeedbackIds: [],
-          };
-        }
-
-        return {
-          id: insight.insight_key,
-          title: insight.content?.split("\n")[0] || "No title",
-          content: insight.content || "",
-          sentiment: "neutral", // Default sentiment
-          relatedFeedbackIds: relatedData?.map((item) => item.feedback_key) || [],
-        };
-      })
-    );
-
-    return insightsWithRelatedFeedbacks;
   };
 
   const {
-    data: insightItems,
+    data = [],
     isLoading,
-    isError,
-    refetch,
+    error,
+    refetch
   } = useQuery({
-    queryKey: ["insightsData", JSON.stringify(filters)],
-    queryFn: fetchInsightsData,
+    queryKey: ['insights'],
+    queryFn: fetchInsights,
+    retry: 1,
   });
 
-  // Function to fetch related feedbacks for a specific insight
-  const fetchRelatedFeedbacks = async (insightId: number) => {
-    const { data, error } = await supabase
-      .from("insights_feedbacks")
-      .select("feedback_key")
-      .eq("insight_key", insightId);
-
-    if (error) {
-      console.error("Error fetching related feedbacks:", error);
-      return [];
-    }
-
-    if (!data || data.length === 0) {
-      return [];
-    }
-
-    const feedbackIds = data.map((item) => item.feedback_key);
-
-    const { data: feedbackData, error: feedbackError } = await supabase
-      .from("feedbacks")
-      .select("*")
-      .in("feedback_key", feedbackIds);
-
-    if (feedbackError) {
-      console.error("Error fetching feedbacks:", feedbackError);
-      return [];
-    }
-
-    return (feedbackData || []).map((item) => ({
-      id: item.feedback_key,
-      content: item.content || "",
-      source: item.source || "",
-      segment: item.segment || "",
-      sentiment: item.sentiment || "",
-      createdAt: item["Creation Date"] || new Date().toISOString(),
-      customerId: item.customer_id || 0,
-    }));
-  };
-
   return {
-    insightItems: insightItems || [],
+    insights: data,
     isLoading,
-    isError,
-    refetch,
-    selectedInsight,
-    setSelectedInsight,
-    fetchRelatedFeedbacks,
-    isFiltering,
-    setIsFiltering,
+    error,
+    refetch
   };
-};
+}

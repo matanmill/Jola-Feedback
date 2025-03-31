@@ -20,7 +20,7 @@ import { useFeedbackData } from '@/hooks/use-feedback-data';
 import { FeedbackDetail } from '@/components/feedback-hub/FeedbackDetail';
 import { Feedback } from '@/types/feedback';
 import DebugPanel from '@/components/feedback-hub/DebugPanel';
-import FeedbackFilters from '@/components/filters/FeedbackFilters';
+import FeedbackFilters, { FilterOptions } from '@/components/filters/FeedbackFilters';
 
 interface FeedbackRepositoryProps {
   isDebugMode: boolean;
@@ -35,37 +35,32 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
   const [selectedSentiment, setSelectedSentiment] = useState<string | null>(null);
-  const [filterOptions, setFilterOptions] = useState({
-    sources: [] as string[],
-    segments: [] as string[],
-    sentiments: [] as string[]
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    sources: [],
+    segments: [],
+    sentiments: []
   });
 
   const { 
-    feedbackItems, 
+    feedbacks, 
     isLoading, 
-    isError, 
-    refetch,
-    filterOptions: apiFilterOptions 
-  } = useFeedbackData({
-    source: selectedSource || '',
-    segment: selectedSegment || '',
-    sentiment: selectedSentiment || ''
-  });
+    error, 
+    refetch 
+  } = useFeedbackData();
 
   // Extract filter options from feedbacks
   useEffect(() => {
-    if (feedbackItems.length > 0) {
+    if (feedbacks.length > 0) {
       const uniqueSources = Array.from(
-        new Set(feedbackItems.map(feedback => feedback.source))
+        new Set(feedbacks.map(feedback => feedback.source))
       ).filter(Boolean) as string[];
       
       const uniqueSegments = Array.from(
-        new Set(feedbackItems.map(feedback => feedback.segment))
+        new Set(feedbacks.map(feedback => feedback.segment))
       ).filter(Boolean) as string[];
       
       const uniqueSentiments = Array.from(
-        new Set(feedbackItems.map(feedback => feedback.sentiment))
+        new Set(feedbacks.map(feedback => feedback.sentiment))
       ).filter(Boolean) as string[];
       
       setFilterOptions({
@@ -74,10 +69,10 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
         sentiments: uniqueSentiments
       });
     }
-  }, [feedbackItems]);
+  }, [feedbacks]);
 
   // Filter feedbacks based on selected filters
-  const filteredFeedbacks = feedbackItems.filter(feedback => {
+  const filteredFeedbacks = feedbacks.filter(feedback => {
     const sourceMatch = !selectedSource || feedback.source === selectedSource;
     const segmentMatch = !selectedSegment || feedback.segment === selectedSegment;
     const sentimentMatch = !selectedSentiment || feedback.sentiment === selectedSentiment;
@@ -86,14 +81,14 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
 
   // Handle errors
   useEffect(() => {
-    if (isError) {
+    if (error) {
       toast({
         title: "Error loading feedback data",
-        description: "Failed to fetch feedback data",
+        description: error.message,
         variant: "destructive",
       });
     }
-  }, [isError, toast]);
+  }, [error, toast]);
 
   const handleFeedbackClick = (feedback: Feedback) => {
     setSelectedFeedback(feedback);
@@ -125,16 +120,16 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
       {isDebugMode && (
         <DebugPanel 
           data={{ 
-            feedbacks: feedbackItems, 
+            feedbacks, 
             filteredCount: filteredFeedbacks.length,
             activeFilters: {
               source: selectedSource,
               segment: selectedSegment,
               sentiment: selectedSentiment
             },
-            error: isError ? "Error fetching data" : null
+            error: error?.message || null
           }} 
-          onRefresh={() => refetch()}
+          onRefresh={refetch}
         />
       )}
 
@@ -142,11 +137,7 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
       <div className="flex justify-between items-center pb-4">
         <h2 className="text-2xl font-semibold tracking-tight">Feedback Repository</h2>
         <FeedbackFilters 
-          options={{
-            sources: filterOptions.sources,
-            segments: filterOptions.segments,
-            sentiments: filterOptions.sentiments
-          }}
+          options={filterOptions}
           onFilterChange={handleFilterChange}
           selectedSource={selectedSource}
           selectedSegment={selectedSegment}
@@ -176,8 +167,8 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
             >
               <CardHeader className="pb-2 bg-white rounded-t-lg">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg line-clamp-2">{feedback.title || 'Feedback'}</CardTitle>
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getSentimentColor(feedback.sentiment || '')}`}>
+                  <CardTitle className="text-lg line-clamp-2">{feedback.title}</CardTitle>
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getSentimentColor(feedback.sentiment)}`}>
                     {feedback.sentiment || 'Neutral'}
                   </div>
                 </div>

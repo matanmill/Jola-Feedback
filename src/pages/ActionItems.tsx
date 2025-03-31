@@ -1,97 +1,100 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { useActionItemsData, ActionItem } from '@/hooks/use-action-items-data';
+import { useFeedbackData } from '@/hooks/use-feedback-data';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useActionItemsData } from '@/hooks/use-action-items-data';
-import { useToast } from '@/components/ui/use-toast';
-import FeedbackFilters from '@/components/filters/FeedbackFilters';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import FeedbackFilters, { FilterOptions } from '@/components/filters/FeedbackFilters';
 
 const ActionItems = () => {
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+  const { actionItems, isLoading, error } = useActionItemsData();
+  const { feedbacks } = useFeedbackData();
+  
+  // Filters
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
   const [selectedSentiment, setSelectedSentiment] = useState<string | null>(null);
-  
-  const { 
-    actionItems, 
-    isLoading, 
-    isError, 
-    selectedActionItem, 
-    setSelectedActionItem,
-    fetchRelatedInsights,
-    isFiltering,
-    setIsFiltering
-  } = useActionItemsData(filters);
-  
-  const [relatedInsights, setRelatedInsights] = useState<any[]>([]);
-  const [isLoadingRelated, setIsLoadingRelated] = useState(false);
-  const { toast } = useToast();
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    sources: [],
+    segments: [],
+    sentiments: []
+  });
 
-  const handleActionItemClick = async (actionItem: any) => {
-    setSelectedActionItem(actionItem);
-    setIsLoadingRelated(true);
-    
-    try {
-      const insights = await fetchRelatedInsights(actionItem.id);
-      setRelatedInsights(insights);
-    } catch (error) {
-      console.error("Error fetching related insights:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load related insights. Please try again."
+  // Extract filter options
+  useEffect(() => {
+    // For action items, we need to look at the related feedbacks to extract filter options
+    if (feedbacks.length > 0) {
+      const uniqueSources = Array.from(
+        new Set(feedbacks.map(feedback => feedback.source))
+      ).filter(Boolean) as string[];
+      
+      const uniqueSegments = Array.from(
+        new Set(feedbacks.map(feedback => feedback.segment))
+      ).filter(Boolean) as string[];
+      
+      const uniqueSentiments = Array.from(
+        new Set(feedbacks.map(feedback => feedback.sentiment))
+      ).filter(Boolean) as string[];
+      
+      setFilterOptions({
+        sources: uniqueSources,
+        segments: uniqueSegments,
+        sentiments: uniqueSentiments
       });
-    } finally {
-      setIsLoadingRelated(false);
     }
-  };
+  }, [feedbacks]);
 
-  const handleCloseDialog = () => {
-    setSelectedActionItem(null);
-    setRelatedInsights([]);
-  };
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error loading action items",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
+
+  // Filter action items based on related feedbacks
+  const filteredActionItems = actionItems.filter(actionItem => {
+    // If no filters are applied, show all action items
+    if (!selectedSource && !selectedSegment && !selectedSentiment) {
+      return true;
+    }
+    
+    // Check if any related feedback matches the filters
+    const relatedFeedbackIDs = actionItem.related_feedbacks || [];
+    const relatedFeedbacks = feedbacks.filter(f => relatedFeedbackIDs.includes(Number(f.id)));
+
+    // Apply filters
+    return relatedFeedbacks.some(feedback => {
+      const sourceMatch = !selectedSource || feedback.source === selectedSource;
+      const segmentMatch = !selectedSegment || feedback.segment === selectedSegment;
+      const sentimentMatch = !selectedSentiment || feedback.sentiment === selectedSentiment;
+      return sourceMatch && segmentMatch && sentimentMatch;
+    });
+  });
 
   const handleFilterChange = (type: 'source' | 'segment' | 'sentiment', value: string | null) => {
     if (type === 'source') setSelectedSource(value);
     if (type === 'segment') setSelectedSegment(value);
     if (type === 'sentiment') setSelectedSentiment(value);
-    
-    // Update filters for API calls
-    const newFilters: Record<string, string> = {};
-    if (type === 'source' ? value : selectedSource) newFilters.source = type === 'source' ? value || '' : selectedSource || '';
-    if (type === 'segment' ? value : selectedSegment) newFilters.segment = type === 'segment' ? value || '' : selectedSegment || '';
-    if (type === 'sentiment' ? value : selectedSentiment) newFilters.sentiment = type === 'sentiment' ? value || '' : selectedSentiment || '';
-    
-    setFilters(newFilters);
-    setIsFiltering(Object.values(newFilters).some(value => value !== ''));
   };
 
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Card className="w-full max-w-md p-6">
-          <CardContent className="text-center space-y-4">
-            <h3 className="text-xl font-semibold text-destructive">Error Loading Data</h3>
-            <p className="text-gray-600">Failed to load action items. Please try again later.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Default filter options in case the data isn't loaded yet
-  const filterOptions = {
-    sources: ['Customer Support', 'Social Media', 'Surveys'].filter(Boolean),
-    segments: ['Enterprise', 'SMB', 'Consumer'].filter(Boolean),
-    sentiments: ['positive', 'neutral', 'negative'].filter(Boolean)
+  const getRelatedFeedbacks = (actionItem: ActionItem) => {
+    const relatedFeedbackIDs = actionItem.related_feedbacks || [];
+    return feedbacks.filter(f => relatedFeedbackIDs.includes(Number(f.id)));
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Action Items</h2>
+      {/* Header and Filters */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold tracking-tight">Action Items</h2>
         <FeedbackFilters 
           options={filterOptions}
           onFilterChange={handleFilterChange}
@@ -100,104 +103,66 @@ const ActionItems = () => {
           selectedSentiment={selectedSentiment}
         />
       </div>
-
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="overflow-hidden">
-              <CardContent className="p-4">
-                <Skeleton className="h-7 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-full mb-1" />
-                <Skeleton className="h-4 w-full mb-1" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : actionItems.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {actionItems.map((item) => (
-            <Card 
-              key={item.id} 
-              className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleActionItemClick(item)}
-            >
-              <CardContent className="p-4">
-                <h3 className="font-medium text-lg line-clamp-1">{item.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{item.content}</p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Badge variant={
-                    item.sentiment === 'positive' ? 'default' : 
-                    item.sentiment === 'negative' ? 'destructive' : 'secondary'
-                  }>
-                    {item.sentiment || 'neutral'}
-                  </Badge>
-                  {item.relatedInsightIds && (
-                    <Badge variant="outline">{item.relatedInsightIds.length} Insights</Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center space-y-2">
-            <h3 className="text-lg font-medium">No Action Items Found</h3>
-            <p className="text-sm text-muted-foreground">
-              {isFiltering ? "Try adjusting your filters" : "Add some action items to get started"}
+      
+      {/* Action Items Content */}
+      <Card className="border-0 shadow-sm overflow-hidden">
+        <CardHeader className="bg-white border-b px-6">
+          <CardTitle>Action Items List</CardTitle>
+        </CardHeader>
+        
+        {isLoading ? (
+          <CardContent className="p-6 flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </CardContent>
+        ) : filteredActionItems.length === 0 ? (
+          <CardContent className="p-8 text-center">
+            <h3 className="text-xl font-medium text-muted-foreground">No action items found</h3>
+            <p className="text-muted-foreground mt-2">
+              {selectedSource || selectedSegment || selectedSentiment
+                ? 'Try adjusting your filters to see more results.'
+                : 'No action items have been created yet.'}
             </p>
-          </div>
-        </div>
-      )}
-
-      <Dialog open={!!selectedActionItem} onOpenChange={(open) => !open && handleCloseDialog()}>
-        {selectedActionItem && (
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-semibold">{selectedActionItem.title}</DialogTitle>
-              <DialogDescription className="text-base font-normal text-foreground mt-2">
-                {selectedActionItem.content}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="mt-6">
-              <h4 className="text-lg font-medium mb-3">Related Insights</h4>
-              
-              {isLoadingRelated ? (
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, i) => (
-                    <Card key={i} className="overflow-hidden">
-                      <CardContent className="p-4">
-                        <Skeleton className="h-6 w-3/4 mb-2" />
-                        <Skeleton className="h-4 w-full mb-1" />
-                        <Skeleton className="h-4 w-2/3" />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : relatedInsights.length > 0 ? (
-                <div className="space-y-3">
-                  {relatedInsights.map((insight) => (
-                    <Card key={insight.id} className="overflow-hidden">
-                      <CardContent className="p-4">
-                        <h5 className="font-medium">{insight.title}</h5>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {insight.content}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No related insights found.</p>
-                </div>
-              )}
-            </div>
-          </DialogContent>
+          </CardContent>
+        ) : (
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Action Item</TableHead>
+                  <TableHead>Related Feedbacks</TableHead>
+                  <TableHead>Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredActionItems.map(item => {
+                  const relatedFeedbacks = getRelatedFeedbacks(item);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.content}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {relatedFeedbacks.length > 0 ? (
+                            relatedFeedbacks.map(feedback => (
+                              <Badge key={feedback.id} variant="outline" className="bg-gray-100">
+                                {feedback.title.substring(0, 20)}...
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-muted-foreground text-sm">None</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
         )}
-      </Dialog>
+      </Card>
     </div>
   );
 };
