@@ -61,7 +61,7 @@ export const useInsightsData = (filters: Record<string, string>) => {
           title: insight.content?.split("\n")[0] || "No title",
           content: insight.content || "",
           sentiment: "neutral", // Default sentiment
-          relatedFeedbackIds: relatedData.map((item) => item.feedback_key) || [],
+          relatedFeedbackIds: relatedData?.map((item) => item.feedback_key) || [],
         };
       })
     );
@@ -75,7 +75,7 @@ export const useInsightsData = (filters: Record<string, string>) => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["insightsData", filters],
+    queryKey: ["insightsData", JSON.stringify(filters)],
     queryFn: fetchInsightsData,
   });
 
@@ -91,6 +91,10 @@ export const useInsightsData = (filters: Record<string, string>) => {
       return [];
     }
 
+    if (!data || data.length === 0) {
+      return [];
+    }
+
     const feedbackIds = data.map((item) => item.feedback_key);
 
     const { data: feedbackData, error: feedbackError } = await supabase
@@ -103,7 +107,7 @@ export const useInsightsData = (filters: Record<string, string>) => {
       return [];
     }
 
-    return feedbackData.map((item) => ({
+    return (feedbackData || []).map((item) => ({
       id: item.feedback_key,
       content: item.content || "",
       source: item.source || "",

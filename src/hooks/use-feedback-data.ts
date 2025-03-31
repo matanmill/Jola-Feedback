@@ -11,6 +11,7 @@ export type FeedbackItem = {
   sentiment: string;
   createdAt: string;
   customerId: number;
+  title?: string;
 };
 
 export const useFeedbackData = (filters: Record<string, string>) => {
@@ -42,6 +43,7 @@ export const useFeedbackData = (filters: Record<string, string>) => {
       sentiment: item.sentiment || "",
       createdAt: item["Creation Date"] || new Date().toISOString(),
       customerId: item.customer_id || 0,
+      title: item.content?.split('\n')[0] || 'Feedback'
     }));
   };
 
@@ -51,20 +53,24 @@ export const useFeedbackData = (filters: Record<string, string>) => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["feedbackData", filters],
+    queryKey: ["feedbackData", JSON.stringify(filters)],
     queryFn: fetchFeedbackData,
   });
 
-  const filterOptions = {
+  const filterOptions = feedbackItems ? {
     source: Array.from(
-      new Set(feedbackItems?.map((item) => item.source) || [])
+      new Set(feedbackItems.map((item) => item.source) || [])
     ).filter(Boolean),
     segment: Array.from(
-      new Set(feedbackItems?.map((item) => item.segment) || [])
+      new Set(feedbackItems.map((item) => item.segment) || [])
     ).filter(Boolean),
     sentiment: Array.from(
-      new Set(feedbackItems?.map((item) => item.sentiment) || [])
+      new Set(feedbackItems.map((item) => item.sentiment) || [])
     ).filter(Boolean),
+  } : {
+    source: [],
+    segment: [],
+    sentiment: []
   };
 
   return {

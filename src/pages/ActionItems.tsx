@@ -10,6 +10,10 @@ import FeedbackFilters from '@/components/filters/FeedbackFilters';
 
 const ActionItems = () => {
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
+  const [selectedSentiment, setSelectedSentiment] = useState<string | null>(null);
+  
   const { 
     actionItems, 
     isLoading, 
@@ -49,9 +53,19 @@ const ActionItems = () => {
     setRelatedInsights([]);
   };
 
-  const applyFilters = (newFilters: Record<string, string>) => {
+  const handleFilterChange = (type: 'source' | 'segment' | 'sentiment', value: string | null) => {
+    if (type === 'source') setSelectedSource(value);
+    if (type === 'segment') setSelectedSegment(value);
+    if (type === 'sentiment') setSelectedSentiment(value);
+    
+    // Update filters for API calls
+    const newFilters: Record<string, string> = {};
+    if (type === 'source' ? value : selectedSource) newFilters.source = type === 'source' ? value || '' : selectedSource || '';
+    if (type === 'segment' ? value : selectedSegment) newFilters.segment = type === 'segment' ? value || '' : selectedSegment || '';
+    if (type === 'sentiment' ? value : selectedSentiment) newFilters.sentiment = type === 'sentiment' ? value || '' : selectedSentiment || '';
+    
     setFilters(newFilters);
-    setIsFiltering(Object.values(newFilters).some(value => value !== '' && value !== 'all'));
+    setIsFiltering(Object.values(newFilters).some(value => value !== ''));
   };
 
   if (isError) {
@@ -67,12 +81,11 @@ const ActionItems = () => {
     );
   }
 
-  // For action items, we assume they don't have direct source/segment properties 
-  // but we still want to support filtering through related insights
+  // Default filter options in case the data isn't loaded yet
   const filterOptions = {
-    source: ['All'],  // Default options if needed
-    segment: ['All'], 
-    sentiment: ['All', 'positive', 'neutral', 'negative']
+    sources: ['Customer Support', 'Social Media', 'Surveys'].filter(Boolean),
+    segments: ['Enterprise', 'SMB', 'Consumer'].filter(Boolean),
+    sentiments: ['positive', 'neutral', 'negative'].filter(Boolean)
   };
 
   return (
@@ -80,9 +93,11 @@ const ActionItems = () => {
       <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Action Items</h2>
         <FeedbackFilters 
-          filterOptions={filterOptions}
-          onApplyFilters={applyFilters}
-          isFiltering={isFiltering}
+          options={filterOptions}
+          onFilterChange={handleFilterChange}
+          selectedSource={selectedSource}
+          selectedSegment={selectedSegment}
+          selectedSentiment={selectedSentiment}
         />
       </div>
 
@@ -112,7 +127,7 @@ const ActionItems = () => {
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{item.content}</p>
                 <div className="flex flex-wrap gap-2 mt-3">
                   <Badge variant={
-                    item.sentiment === 'positive' ? 'success' : 
+                    item.sentiment === 'positive' ? 'default' : 
                     item.sentiment === 'negative' ? 'destructive' : 'secondary'
                   }>
                     {item.sentiment || 'neutral'}

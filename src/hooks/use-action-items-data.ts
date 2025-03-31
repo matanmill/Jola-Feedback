@@ -61,7 +61,7 @@ export const useActionItemsData = (filters: Record<string, string>) => {
           title: actionItem.content?.split("\n")[0] || "No title",
           content: actionItem.content || "",
           sentiment: "neutral", // Default sentiment
-          relatedInsightIds: relatedData.map((item) => item.insight_key) || [],
+          relatedInsightIds: relatedData?.map((item) => item.insight_key) || [],
         };
       })
     );
@@ -75,7 +75,7 @@ export const useActionItemsData = (filters: Record<string, string>) => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["actionItemsData", filters],
+    queryKey: ["actionItemsData", JSON.stringify(filters)],
     queryFn: fetchActionItemsData,
   });
 
@@ -91,6 +91,10 @@ export const useActionItemsData = (filters: Record<string, string>) => {
       return [];
     }
 
+    if (!data || data.length === 0) {
+      return [];
+    }
+
     const insightIds = data.map((item) => item.insight_key);
 
     const { data: insightData, error: insightError } = await supabase
@@ -103,7 +107,7 @@ export const useActionItemsData = (filters: Record<string, string>) => {
       return [];
     }
 
-    return insightData.map((item) => ({
+    return (insightData || []).map((item) => ({
       id: item.insight_key,
       title: item.content?.split("\n")[0] || "No title",
       content: item.content || "",
