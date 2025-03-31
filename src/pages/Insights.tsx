@@ -1,49 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useInsightsData } from '@/hooks/use-insights-data';
+
+import React, { useState } from 'react';
+import { useInsightsData, Insight } from '@/hooks/use-insights-data';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import FeedbackFilters, { FilterOptions } from '@/components/filters/FeedbackFilters';
-import { useFeedbackData } from '@/hooks/use-feedback-data';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const Insights = () => {
   const { toast } = useToast();
-  const { insights, isLoading, error } = useInsightsData();
-  const { feedbacks } = useFeedbackData();
+  const { data: insights = [], isLoading, error, isSuccess } = useInsightsData();
   
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
-  const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
-  const [selectedSentiment, setSelectedSentiment] = useState<string | null>(null);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    sources: [],
-    segments: [],
-    sentiments: []
-  });
+  const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (feedbacks.length > 0) {
-      const uniqueSources = Array.from(
-        new Set(feedbacks.map(feedback => feedback.source))
-      ).filter(Boolean) as string[];
-      
-      const uniqueSegments = Array.from(
-        new Set(feedbacks.map(feedback => feedback.segment))
-      ).filter(Boolean) as string[];
-      
-      const uniqueSentiments = Array.from(
-        new Set(feedbacks.map(feedback => feedback.sentiment))
-      ).filter(Boolean) as string[];
-      
-      setFilterOptions({
-        sources: uniqueSources,
-        segments: uniqueSegments,
-        sentiments: uniqueSentiments
-      });
-    }
-  }, [feedbacks]);
+  // Handle click on an insight
+  const handleInsightClick = (insight: Insight) => {
+    setSelectedInsight(insight);
+    setIsDialogOpen(true);
+  };
 
-  useEffect(() => {
+  // Show error toast if data fetching fails
+  React.useEffect(() => {
     if (error) {
       toast({
         title: "Error loading insights",
@@ -53,32 +32,17 @@ const Insights = () => {
     }
   }, [error, toast]);
 
-  const handleFilterChange = (type: 'source' | 'segment' | 'sentiment', value: string | null) => {
-    if (type === 'source') setSelectedSource(value);
-    if (type === 'segment') setSelectedSegment(value);
-    if (type === 'sentiment') setSelectedSentiment(value);
-  };
-
-  const filteredInsights = insights;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold tracking-tight">Insights</h2>
-        <FeedbackFilters 
-          options={filterOptions}
-          onFilterChange={handleFilterChange}
-          selectedSource={selectedSource}
-          selectedSegment={selectedSegment}
-          selectedSentiment={selectedSentiment}
-        />
       </div>
       
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : filteredInsights.length === 0 ? (
+      ) : insights.length === 0 ? (
         <div className="p-8 text-center border rounded-lg bg-muted/30">
           <h3 className="text-xl font-medium text-muted-foreground">No insights found</h3>
           <p className="text-muted-foreground mt-2">
@@ -86,9 +50,13 @@ const Insights = () => {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {filteredInsights.map(insight => (
-            <Card key={insight.id} className="border-0 shadow-sm">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {insights.map(insight => (
+            <Card 
+              key={insight.id} 
+              className="border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleInsightClick(insight)}
+            >
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
                 <CardTitle className="text-lg">Insight #{insight.id}</CardTitle>
@@ -102,6 +70,11 @@ const Insights = () => {
                     <Badge variant="outline" className="bg-gray-50">
                       {new Date(insight.created_at).toLocaleDateString()}
                     </Badge>
+                    {insight.related_feedbacks && insight.related_feedbacks.length > 0 && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                        {insight.related_feedbacks.length} related feedback{insight.related_feedbacks.length !== 1 ? 's' : ''}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -109,6 +82,53 @@ const Insights = () => {
           ))}
         </div>
       )}
+
+      {/* Insight Detail Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-amber-500" />
+              {selectedInsight ? `Insight #${selectedInsight.id}` : 'Insight Details'}
+            </DialogTitle>
+            <DialogDescription>
+              View detailed information about this insight
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedInsight && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Content</h3>
+                <p className="text-base">{selectedInsight.content}</p>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Created</h3>
+                <p className="text-sm">{new Date(selectedInsight.created_at).toLocaleString()}</p>
+              </div>
+              
+              {selectedInsight.related_feedbacks && selectedInsight.related_feedbacks.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Related Feedbacks</h3>
+                  <div className="space-y-2">
+                    {selectedInsight.related_feedbacks.map(feedbackId => (
+                      <div key={feedbackId} className="p-2 bg-muted rounded-md text-sm">
+                        Feedback ID: {feedbackId}
+                        {/* In the future, we'll fetch and display the actual feedback content */}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-end pt-4">
+                <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

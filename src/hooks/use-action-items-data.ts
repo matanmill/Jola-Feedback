@@ -7,6 +7,7 @@ export interface ActionItem {
   content: string;
   created_at: string;
   related_feedbacks?: number[];
+  related_insights?: number[];
 }
 
 export function useActionItemsData() {
@@ -14,42 +15,40 @@ export function useActionItemsData() {
     console.log('Fetching action items data from Supabase');
     
     try {
-      // First fetch action items
+      // Fetch action items
       const { data: actionItems, error } = await supabase
         .from('action_items')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('actionitem_key, content');
       
       if (error) {
         console.error('Error fetching action items data:', error);
         throw new Error(error.message || 'Failed to fetch action items data');
       }
       
-      console.log(`Successfully fetched ${actionItems?.length} action items`);
-      
-      // Then fetch the relationships between action items and feedbacks
-      const { data: relationships, error: relError } = await supabase
-        .from('actionitems_feedbacks')
+      // Fetch relationships between action items and insights
+      const { data: insightRelationships, error: insightRelError } = await supabase
+        .from('actionitems_insights')
         .select('*');
       
-      if (relError) {
-        console.error('Error fetching relationships:', relError);
+      if (insightRelError) {
+        console.error('Error fetching action items-insights relationships:', insightRelError);
       }
       
-      // Map the action items with their related feedbacks
+      // Map the action items with their related insights
       const formattedData: ActionItem[] = actionItems?.map(item => {
-        const relatedFeedbacks = relationships
-          ?.filter(rel => rel.action_item_id === item.action_item_id)
-          .map(rel => rel.feedback_id);
+        const relatedInsights = insightRelationships
+          ?.filter(rel => rel.actionitem_key === item.actionitem_key)
+          .map(rel => rel.insight_key);
         
         return {
-          id: item.action_item_id,
-          content: item.content,
-          created_at: item.created_at,
-          related_feedbacks: relatedFeedbacks || []
+          id: item.actionitem_key,
+          content: item.content || '',
+          created_at: new Date().toISOString(), // Use current date as fallback
+          related_insights: relatedInsights || []
         };
       }) || [];
       
+      console.log(`Successfully fetched ${formattedData.length} action items`);
       return formattedData;
     } catch (error) {
       console.error('Exception fetching action items data:', error);
@@ -57,21 +56,8 @@ export function useActionItemsData() {
     }
   };
 
-  const {
-    data = [],
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
+  return useQuery({
     queryKey: ['actionItems'],
     queryFn: fetchActionItems,
-    retry: 1,
   });
-
-  return {
-    actionItems: data,
-    isLoading,
-    error,
-    refetch
-  };
 }

@@ -1,26 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Card, 
-  CardContent, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
-} from '@/components/ui/dialog';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, MessageSquare, User, Tag, Building } from 'lucide-react';
-import { useFeedbackData } from '@/hooks/use-feedback-data';
+import { Loader2, MessageSquare, Tag } from 'lucide-react';
+import { useFeedbackData, Feedback } from '@/hooks/use-feedback-data';
 import { FeedbackDetail } from '@/components/feedback-hub/FeedbackDetail';
-import { Feedback } from '@/types/feedback';
 import DebugPanel from '@/components/feedback-hub/DebugPanel';
-import FeedbackFilters, { FilterOptions } from '@/components/filters/FeedbackFilters';
 
 interface FeedbackRepositoryProps {
   isDebugMode: boolean;
@@ -35,41 +22,13 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
   const [selectedSentiment, setSelectedSentiment] = useState<string | null>(null);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    sources: [],
-    segments: [],
-    sentiments: []
-  });
 
   const { 
-    feedbacks, 
+    data: feedbacks = [], 
     isLoading, 
     error, 
     refetch 
   } = useFeedbackData();
-
-  // Extract filter options from feedbacks
-  useEffect(() => {
-    if (feedbacks.length > 0) {
-      const uniqueSources = Array.from(
-        new Set(feedbacks.map(feedback => feedback.source))
-      ).filter(Boolean) as string[];
-      
-      const uniqueSegments = Array.from(
-        new Set(feedbacks.map(feedback => feedback.segment))
-      ).filter(Boolean) as string[];
-      
-      const uniqueSentiments = Array.from(
-        new Set(feedbacks.map(feedback => feedback.sentiment))
-      ).filter(Boolean) as string[];
-      
-      setFilterOptions({
-        sources: uniqueSources,
-        segments: uniqueSegments,
-        sentiments: uniqueSentiments
-      });
-    }
-  }, [feedbacks]);
 
   // Filter feedbacks based on selected filters
   const filteredFeedbacks = feedbacks.filter(feedback => {
@@ -95,13 +54,7 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
     setIsDetailOpen(true);
   };
 
-  const handleFilterChange = (type: 'source' | 'segment' | 'sentiment', value: string | null) => {
-    if (type === 'source') setSelectedSource(value);
-    if (type === 'segment') setSelectedSegment(value);
-    if (type === 'sentiment') setSelectedSentiment(value);
-  };
-
-  const getSentimentColor = (sentiment: string) => {
+  const getSentimentColor = (sentiment: string | undefined) => {
     switch (sentiment?.toLowerCase()) {
       case 'positive':
         return 'bg-green-500';
@@ -129,21 +82,9 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
             },
             error: error?.message || null
           }} 
-          onRefresh={refetch}
+          onRefresh={() => refetch()}
         />
       )}
-
-      {/* Filters */}
-      <div className="flex justify-between items-center pb-4">
-        <h2 className="text-2xl font-semibold tracking-tight">Feedback Repository</h2>
-        <FeedbackFilters 
-          options={filterOptions}
-          onFilterChange={handleFilterChange}
-          selectedSource={selectedSource}
-          selectedSegment={selectedSegment}
-          selectedSentiment={selectedSentiment}
-        />
-      </div>
 
       {/* Feedback List */}
       {isLoading ? (
@@ -167,7 +108,9 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
             >
               <CardHeader className="pb-2 bg-white rounded-t-lg">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg line-clamp-2">{feedback.title}</CardTitle>
+                  <CardTitle className="text-lg line-clamp-2">
+                    {feedback.content.substring(0, 50) + (feedback.content.length > 50 ? '...' : '')}
+                  </CardTitle>
                   <div className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getSentimentColor(feedback.sentiment)}`}>
                     {feedback.sentiment || 'Neutral'}
                   </div>
@@ -183,12 +126,6 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
                   <Badge variant="secondary" className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700">
                     <MessageSquare className="h-3 w-3" />
                     {feedback.source}
-                  </Badge>
-                )}
-                {feedback.client && (
-                  <Badge variant="secondary" className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700">
-                    <Building className="h-3 w-3" />
-                    {feedback.client}
                   </Badge>
                 )}
                 {feedback.segment && (

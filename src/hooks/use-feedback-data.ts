@@ -1,8 +1,15 @@
 
-import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Feedback } from '@/types/feedback';
 import { supabase } from '@/integrations/supabase/client';
+
+export interface Feedback {
+  id: number;
+  content: string;
+  source?: string;
+  segment?: string;
+  sentiment?: string;
+  created_at: string;
+}
 
 export function useFeedbackData() {
   const fetchFeedbacks = async (): Promise<Feedback[]> => {
@@ -11,8 +18,7 @@ export function useFeedbackData() {
     try {
       const { data, error } = await supabase
         .from('feedbacks')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('feedback_key, content, source, segment, sentiment, "Creation Date"');
       
       if (error) {
         console.error('Error fetching feedback data:', error);
@@ -21,16 +27,14 @@ export function useFeedbackData() {
       
       console.log(`Successfully fetched ${data?.length} feedbacks`);
       
-      // Transform data to match Feedback type if needed
+      // Transform data to match Feedback interface
       const formattedData: Feedback[] = data?.map(item => ({
-        id: item.feedback_id,
-        title: item.content.substring(0, 50) + (item.content.length > 50 ? '...' : ''),
+        id: item.feedback_key,
         content: item.content || '',
         source: item.source || 'Unknown',
         sentiment: item.sentiment || 'neutral',
         segment: item.segment || '',
-        client: 'Jola', // Default client 
-        created_at: item.created_at || new Date().toISOString()
+        created_at: item["Creation Date"] || new Date().toISOString()
       })) || [];
       
       return formattedData;
@@ -40,21 +44,8 @@ export function useFeedbackData() {
     }
   };
 
-  const {
-    data = [],
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
+  return useQuery({
     queryKey: ['feedbacks'],
     queryFn: fetchFeedbacks,
-    retry: 1,
   });
-
-  return {
-    feedbacks: data,
-    isLoading,
-    error,
-    refetch
-  };
 }
