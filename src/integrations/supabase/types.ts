@@ -64,6 +64,7 @@ export type Database = {
           feedback_id: number
           segment: string | null
           sentiment: string | null
+          source: string | null
           user_id: number
         }
         Insert: {
@@ -72,6 +73,7 @@ export type Database = {
           feedback_id?: number
           segment?: string | null
           sentiment?: string | null
+          source?: string | null
           user_id: number
         }
         Update: {
@@ -80,7 +82,26 @@ export type Database = {
           feedback_id?: number
           segment?: string | null
           sentiment?: string | null
+          source?: string | null
           user_id?: number
+        }
+        Relationships: []
+      }
+      insights: {
+        Row: {
+          content: string | null
+          created_at: string
+          insight_id: number
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          insight_id?: number
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          insight_id?: number
         }
         Relationships: []
       }

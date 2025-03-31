@@ -23,13 +23,13 @@ export function useFeedbackData() {
       
       // Transform data to match Feedback type if needed
       const formattedData: Feedback[] = data?.map(item => ({
-        id: item.id || item.feedback_id,
-        title: item.title || 'Untitled Feedback',
+        id: item.feedback_id,
+        title: item.content.substring(0, 50) + (item.content.length > 50 ? '...' : ''),
         content: item.content || '',
         source: item.source || 'Unknown',
         sentiment: item.sentiment || 'neutral',
         segment: item.segment || '',
-        client: item.client || '',
+        client: 'Jola', // Default client 
         created_at: item.created_at || new Date().toISOString()
       })) || [];
       
