@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useActionItemsData, ActionItem } from '@/hooks/use-action-items-data';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -7,6 +6,14 @@ import { Loader2, CheckSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+
+// Add this interface at the top of the file
+interface ActionItemWithInsights extends ActionItem {
+  related_insights_data: {
+    insight_key: number;
+    insight_content: string;
+  }[];
+}
 
 const ActionItems = () => {
   const { toast } = useToast();
@@ -108,16 +115,32 @@ const ActionItems = () => {
                 <p className="text-sm">{new Date(selectedActionItem.created_at).toLocaleString()}</p>
               </div>
               
-              {selectedActionItem.related_insights && selectedActionItem.related_insights.length > 0 && (
+              {(selectedActionItem.related_insights_data?.length > 0) && (
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">Related Insights</h3>
-                  <div className="space-y-2">
-                    {selectedActionItem.related_insights.map(insightId => (
-                      <div key={insightId} className="p-2 bg-muted rounded-md text-sm">
-                        Insight ID: {insightId}
-                        {/* In the future, we'll fetch and display the actual insight content */}
-                      </div>
-                    ))}
+                  <div className="border rounded-md">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-sm font-medium">ID</th>
+                          <th className="px-4 py-2 text-left text-sm font-medium">Content</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {selectedActionItem.related_insights_data.map(insight => (
+                          <tr key={insight.insight_key} className="hover:bg-muted/30">
+                            <td className="px-4 py-2 text-sm font-medium">
+                              #{insight.insight_key}
+                            </td>
+                            <td className="px-4 py-2">
+                              <div className="max-h-24 overflow-y-auto text-sm">
+                                {insight.insight_content}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}

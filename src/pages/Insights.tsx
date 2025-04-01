@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useInsightsData, Insight } from '@/hooks/use-insights-data';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -8,15 +7,32 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+// Update the Insight interface to match the one from use-insights-data
+interface InsightWithFeedbacks extends Insight {
+  related_feedbacks_data: {
+    feedback_key: number;
+    feedback_content: string;
+    source: string;
+    segment: string;
+    sentiment: string;
+    feedback_created_at: string;
+  }[];
+}
+
 const Insights = () => {
   const { toast } = useToast();
-  const { data: insights = [], isLoading, error, isSuccess } = useInsightsData();
+  const { data: insights = [], isLoading, error, isSuccess } = useInsightsData() as { 
+    data: InsightWithFeedbacks[], 
+    isLoading: boolean, 
+    error: any, 
+    isSuccess: boolean 
+  };
   
-  const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
+  const [selectedInsight, setSelectedInsight] = useState<InsightWithFeedbacks | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Handle click on an insight
-  const handleInsightClick = (insight: Insight) => {
+  const handleInsightClick = (insight: InsightWithFeedbacks) => {
     setSelectedInsight(insight);
     setIsDialogOpen(true);
   };
@@ -85,7 +101,7 @@ const Insights = () => {
 
       {/* Insight Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-amber-500" />
@@ -108,16 +124,57 @@ const Insights = () => {
                 <p className="text-sm">{new Date(selectedInsight.created_at).toLocaleString()}</p>
               </div>
               
-              {selectedInsight.related_feedbacks && selectedInsight.related_feedbacks.length > 0 && (
+              {(selectedInsight.related_feedbacks_data?.length > 0 || selectedInsight.related_feedbacks?.length > 0) && (
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">Related Feedbacks</h3>
-                  <div className="space-y-2">
-                    {selectedInsight.related_feedbacks.map(feedbackId => (
-                      <div key={feedbackId} className="p-2 bg-muted rounded-md text-sm">
-                        Feedback ID: {feedbackId}
-                        {/* In the future, we'll fetch and display the actual feedback content */}
-                      </div>
-                    ))}
+                  <div className="border rounded-md">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-sm font-medium">ID</th>
+                          <th className="px-4 py-2 text-left text-sm font-medium">Content</th>
+                          <th className="px-4 py-2 text-left text-sm font-medium">Source</th>
+                          <th className="px-4 py-2 text-left text-sm font-medium">Segment</th>
+                          <th className="px-4 py-2 text-left text-sm font-medium">Sentiment</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {(selectedInsight.related_feedbacks_data || []).map(feedback => (
+                          <tr key={feedback.feedback_key} className="hover:bg-muted/30">
+                            <td className="px-4 py-2 text-sm font-medium">
+                              #{feedback.feedback_key}
+                            </td>
+                            <td className="px-4 py-2">
+                              <div className="max-h-24 overflow-y-auto text-sm">
+                                {feedback.feedback_content}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {feedback.source}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {feedback.segment}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-2">
+                              <Badge 
+                                variant="outline" 
+                                className={`${
+                                  feedback.sentiment.toLowerCase() === 'positive' ? 'bg-green-50 text-green-700' :
+                                  feedback.sentiment.toLowerCase() === 'negative' ? 'bg-red-50 text-red-700' :
+                                  'bg-gray-50 text-gray-700'
+                                }`}
+                              >
+                                {feedback.sentiment}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
