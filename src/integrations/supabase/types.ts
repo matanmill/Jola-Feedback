@@ -1,6 +1,6 @@
 export type Json =
   | string
-  | number
+  | string
   | boolean
   | null
   | { [key: string]: Json | undefined }
@@ -11,31 +11,31 @@ export type Database = {
     Tables: {
       action_items: {
         Row: {
-          actionitem_key: number
+          actionitem_key: string
           content: string | null
         }
         Insert: {
-          actionitem_key: number
+          actionitem_key: string
           content?: string | null
         }
         Update: {
-          actionitem_key?: number
+          actionitem_key?: string
           content?: string | null
         }
         Relationships: []
       }
       actionitems_insights: {
         Row: {
-          actionitem_key: number
-          insight_key: number
+          actionitem_key: string
+          insight_key: string
         }
         Insert: {
-          actionitem_key: number
-          insight_key: number
+          actionitem_key: string
+          insight_key: string
         }
         Update: {
-          actionitem_key?: number
-          insight_key?: number
+          actionitem_key?: string
+          insight_key?: string
         }
         Relationships: [
           {
@@ -56,16 +56,16 @@ export type Database = {
       }
       actionitems_labels: {
         Row: {
-          actionitem_key: number
-          label_key: number
+          actionitem_key: string
+          label_key: string
         }
         Insert: {
-          actionitem_key: number
-          label_key: number
+          actionitem_key: string
+          label_key: string
         }
         Update: {
-          actionitem_key?: number
-          label_key?: number
+          actionitem_key?: string
+          label_key?: string
         }
         Relationships: [
           {
@@ -88,8 +88,8 @@ export type Database = {
         Row: {
           content: string | null
           "Creation Date": string | null
-          customer_id: number | null
-          feedback_key: number
+          customer_id: string | null
+          feedback_key: string
           segment: string | null
           sentiment: string | null
           source: string | null
@@ -97,8 +97,8 @@ export type Database = {
         Insert: {
           content?: string | null
           "Creation Date"?: string | null
-          customer_id?: number | null
-          feedback_key: number
+          customer_id?: string | null
+          feedback_key: string
           segment?: string | null
           sentiment?: string | null
           source?: string | null
@@ -106,8 +106,8 @@ export type Database = {
         Update: {
           content?: string | null
           "Creation Date"?: string | null
-          customer_id?: number | null
-          feedback_key?: number
+          customer_id?: string | null
+          feedback_key?: string
           segment?: string | null
           sentiment?: string | null
           source?: string | null
@@ -116,16 +116,16 @@ export type Database = {
       }
       insight_labels: {
         Row: {
-          insight_key: number
-          label_key: number
+          insight_key: string
+          label_key: string
         }
         Insert: {
-          insight_key: number
-          label_key: number
+          insight_key: string
+          label_key: string
         }
         Update: {
-          insight_key?: number
-          label_key?: number
+          insight_key?: string
+          label_key?: string
         }
         Relationships: [
           {
@@ -147,30 +147,30 @@ export type Database = {
       insights: {
         Row: {
           content: string | null
-          insight_key: number
+          insight_key: string
         }
         Insert: {
           content?: string | null
-          insight_key: number
+          insight_key: string
         }
         Update: {
           content?: string | null
-          insight_key?: number
+          insight_key?: string
         }
         Relationships: []
       }
       insights_feedbacks: {
         Row: {
-          feedback_key: number
-          insight_key: number
+          feedback_key: string
+          insight_key: string
         }
         Insert: {
-          feedback_key: number
-          insight_key: number
+          feedback_key: string
+          insight_key: string
         }
         Update: {
-          feedback_key?: number
-          insight_key?: number
+          feedback_key?: string
+          insight_key?: string
         }
         Relationships: [
           {
@@ -192,15 +192,15 @@ export type Database = {
       labels: {
         Row: {
           label: string | null
-          label_key: number
+          label_key: string
         }
         Insert: {
           label?: string | null
-          label_key: number
+          label_key: string
         }
         Update: {
           label?: string | null
-          label_key?: number
+          label_key?: string
         }
         Relationships: []
       }
@@ -209,7 +209,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_insights_with_feedbacks: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          insight_key: string
+          insight_content: string
+          feedback_key: string
+          feedback_content: string
+          source: string
+          segment: string
+          sentiment: string
+          feedback_created_at: string
+        }[]
+      }
+      get_action_items_with_insights: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          actionitem_key: string
+          actionitem_content: string
+          insight_key: string
+          insight_content: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useInsightsData, Insight } from '@/hooks/use-insights-data';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Lightbulb } from 'lucide-react';
+import { Loader2, Lightbulb, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -19,22 +19,63 @@ interface InsightWithFeedbacks extends Insight {
   }[];
 }
 
+interface UseInsightsDataResult {
+  data: InsightWithFeedbacks[];
+  isLoading: boolean;
+  error: any;
+  isSuccess: boolean;
+  refetch: () => void;
+}
+
 const Insights = () => {
   const { toast } = useToast();
-  const { data: insights = [], isLoading, error, isSuccess } = useInsightsData() as { 
-    data: InsightWithFeedbacks[], 
-    isLoading: boolean, 
-    error: any, 
-    isSuccess: boolean 
-  };
+  const { data: insights = [], isLoading, error, isSuccess, refetch } = useInsightsData() as UseInsightsDataResult;
   
   const [selectedInsight, setSelectedInsight] = useState<InsightWithFeedbacks | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Handle click on an insight
   const handleInsightClick = (insight: InsightWithFeedbacks) => {
     setSelectedInsight(insight);
     setIsDialogOpen(true);
+  };
+
+  // Handle generate insights
+  const handleGenerateInsights = async () => {
+    setIsGenerating(true);
+    try {
+      console.log('Starting insights generation...');
+      const response = await fetch('https://test-python-backend-1.onrender.com/generate-insights', {
+        method: 'GET',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Insights generation response:', data);
+      
+      toast({
+        title: "Success",
+        description: "Insights generation started successfully",
+      });
+
+      // Refetch insights after a short delay to get new data
+      setTimeout(() => {
+        refetch();
+      }, 5000);
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate insights. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Show error toast if data fetching fails
@@ -52,6 +93,23 @@ const Insights = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold tracking-tight">Insights</h2>
+        <Button 
+          onClick={handleGenerateInsights} 
+          disabled={isGenerating}
+          className="flex items-center gap-2"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Generate Insights
+            </>
+          )}
+        </Button>
       </div>
       
       {isLoading ? (
