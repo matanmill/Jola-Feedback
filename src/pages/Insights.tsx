@@ -6,6 +6,7 @@ import { Loader2, Lightbulb, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { getFirstNWords } from '@/lib/utils';
 
 // Update the Insight interface to match the one from use-insights-data
 interface InsightWithFeedbacks extends Insight {
@@ -133,7 +134,9 @@ const Insights = () => {
             >
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
-                <CardTitle className="text-lg">Insight #{insight.id}</CardTitle>
+                <CardTitle className="text-lg">
+                  {getFirstNWords(insight.content) || `Insight #${insight.id}`}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700">
@@ -163,7 +166,7 @@ const Insights = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-amber-500" />
-              {selectedInsight ? `Insight #${selectedInsight.id}` : 'Insight Details'}
+              {selectedInsight ? getFirstNWords(selectedInsight.content) || `Insight #${selectedInsight.id}` : 'Insight Details'}
             </DialogTitle>
             <DialogDescription>
               View detailed information about this insight
@@ -189,7 +192,6 @@ const Insights = () => {
                     <table className="w-full">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="px-4 py-2 text-left text-sm font-medium">ID</th>
                           <th className="px-4 py-2 text-left text-sm font-medium">Content</th>
                           <th className="px-4 py-2 text-left text-sm font-medium">Source</th>
                           <th className="px-4 py-2 text-left text-sm font-medium">Segment</th>
@@ -199,9 +201,6 @@ const Insights = () => {
                       <tbody className="divide-y divide-border">
                         {(selectedInsight.related_feedbacks_data || []).map(feedback => (
                           <tr key={feedback.feedback_key} className="hover:bg-muted/30">
-                            <td className="px-4 py-2 text-sm font-medium">
-                              #{feedback.feedback_key}
-                            </td>
                             <td className="px-4 py-2">
                               <div className="max-h-24 overflow-y-auto text-sm">
                                 {feedback.feedback_content}

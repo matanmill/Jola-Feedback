@@ -1,4 +1,3 @@
-
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -18,4 +17,10 @@ export function formatDate(dateString: string): string {
     console.error('Error formatting date:', error);
     return dateString || 'Unknown date';
   }
+}
+
+export function getFirstNWords(text: string, n: number = 3): string {
+  if (!text) return '';
+  const words = text.trim().split(/\s+/);
+  return words.slice(0, n).join(' ');
 }
