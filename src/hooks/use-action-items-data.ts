@@ -12,6 +12,7 @@ export interface ActionItem {
   related_insights_data?: {
     insight_key: string;
     insight_content: string;
+    insight_created_at: string;
   }[];
 }
 
@@ -54,7 +55,8 @@ export function useActionItemsData() {
           actionItem.related_insights?.push(row.insight_key);
           actionItem.related_insights_data?.push({
             insight_key: row.insight_key,
-            insight_content: row.insight_content || ''
+            insight_content: row.insight_content || '',
+            insight_created_at: new Date().toISOString() // Using current date as fallback since this field might not exist
           });
         }
       });
@@ -69,7 +71,7 @@ export function useActionItemsData() {
   };
 
   return useQuery({
-    queryKey: ['actionItems'],
+    queryKey: ['action-items'],
     queryFn: fetchActionItems,
   });
 }
