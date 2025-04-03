@@ -1,30 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type InsightFeedbackResult = Database['public']['Functions']['get_insights_with_feedbacks']['Returns'][number];
 
 export interface Insight {
-  id: number;
+  id: string;
   content: string;
   created_at: string;
-  related_feedbacks?: number[];
+  related_feedbacks?: string[];
   related_feedbacks_data?: {
-    feedback_key: number;
+    feedback_key: string;
     feedback_content: string;
     source: string;
     segment: string;
     sentiment: string;
     feedback_created_at: string;
   }[];
-}
-
-interface InsightFeedbackResult {
-  insight_key: number;
-  insight_content: string;
-  feedback_key: number;
-  feedback_content: string;
-  source: string;
-  segment: string;
-  sentiment: string;
-  "Creation Date": string;
 }
 
 export function useInsightsData() {
@@ -34,7 +26,8 @@ export function useInsightsData() {
     try {
       // Use the RPC to fetch insights with their related feedbacks
       const { data, error } = await supabase
-        .rpc<InsightFeedbackResult>('get_insights_with_feedbacks');
+        .rpc('get_insights_with_feedbacks')
+        .returns<InsightFeedbackResult[]>();
       
       if (error) {
         console.error('Error fetching insights data:', error);
@@ -47,7 +40,7 @@ export function useInsightsData() {
       }
 
       // Group the results by insight
-      const insightsMap = new Map<number, Insight>();
+      const insightsMap = new Map<string, Insight>();
       
       data.forEach(row => {
         if (!insightsMap.has(row.insight_key)) {
@@ -70,7 +63,7 @@ export function useInsightsData() {
             source: row.source || '',
             segment: row.segment || '',
             sentiment: row.sentiment || '',
-            feedback_created_at: row["Creation Date"] || new Date().toISOString()
+            feedback_created_at: row.feedback_created_at || new Date().toISOString()
           });
         }
       });

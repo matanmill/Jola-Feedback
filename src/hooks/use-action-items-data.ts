@@ -1,22 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type ActionItemInsightResult = Database['public']['Functions']['get_action_items_with_insights']['Returns'][number];
 
 export interface ActionItem {
-  id: number;
+  id: string;
   content: string;
   created_at: string;
-  related_insights?: number[];
+  related_insights?: string[];
   related_insights_data?: {
-    insight_key: number;
+    insight_key: string;
     insight_content: string;
   }[];
-}
-
-interface ActionItemInsightResult {
-  actionitem_key: number;
-  actionitem_content: string;
-  insight_key: number;
-  insight_content: string;
 }
 
 export function useActionItemsData() {
@@ -25,7 +21,8 @@ export function useActionItemsData() {
     
     try {
       const { data, error } = await supabase
-        .rpc<ActionItemInsightResult>('get_action_items_with_insights');
+        .rpc('get_action_items_with_insights')
+        .returns<ActionItemInsightResult[]>();
       
       if (error) {
         console.error('Error fetching action items data:', error);
@@ -38,7 +35,7 @@ export function useActionItemsData() {
       }
 
       // Group the results by action item
-      const actionItemsMap = new Map<number, ActionItem>();
+      const actionItemsMap = new Map<string, ActionItem>();
       
       data.forEach(row => {
         if (!actionItemsMap.has(row.actionitem_key)) {
