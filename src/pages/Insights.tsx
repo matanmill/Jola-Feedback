@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useInsightsData, Insight } from '@/hooks/use-insights-data';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -12,7 +11,7 @@ import { getFirstNWords } from '@/lib/utils';
 // Update the Insight interface to match the one from use-insights-data
 interface InsightWithFeedbacks extends Insight {
   related_feedbacks_data: {
-    feedback_key: string; // Changed from number to string
+    feedback_key: number;
     feedback_content: string;
     source: string;
     segment: string;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useActionItemsData, ActionItem } from '@/hooks/use-action-items-data';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -9,12 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { getFirstNWords } from '@/lib/utils';
 
-// Fix the interface to match the ActionItem type
+// Add this interface at the top of the file
 interface ActionItemWithInsights extends ActionItem {
   related_insights_data: {
-    insight_key: string; // Changed from number to string
+    insight_key: number;
     insight_content: string;
-    insight_created_at: string; // Add this required property
   }[];
 }
 
