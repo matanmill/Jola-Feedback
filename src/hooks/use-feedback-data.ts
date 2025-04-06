@@ -1,7 +1,15 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Feedback } from '@/types/feedback';
+
+export interface Feedback {
+  id: number;
+  content: string;
+  source?: string;
+  segment?: string;
+  sentiment?: string;
+  created_at: string;
+}
 
 export function useFeedbackData() {
   const fetchFeedbacks = async (): Promise<Feedback[]> => {
@@ -22,7 +30,6 @@ export function useFeedbackData() {
       // Transform data to match Feedback interface
       const formattedData: Feedback[] = data?.map(item => ({
         id: item.feedback_key,
-        title: item.content?.substring(0, 50) || 'Untitled Feedback', // Add title property
         content: item.content || '',
         source: item.source || 'Unknown',
         sentiment: item.sentiment || 'neutral',

@@ -5,8 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, MessageSquare, Tag } from 'lucide-react';
-import { useFeedbackData } from '@/hooks/use-feedback-data';
-import { Feedback } from '@/types/feedback';
+import { useFeedbackData, Feedback } from '@/hooks/use-feedback-data';
 import { FeedbackDetail } from '@/components/feedback-hub/FeedbackDetail';
 import DebugPanel from '@/components/feedback-hub/DebugPanel';
 
@@ -110,7 +109,7 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
               <CardHeader className="pb-2 bg-white rounded-t-lg">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg line-clamp-2">
-                    {feedback.title || feedback.content?.substring(0, 50) + (feedback.content && feedback.content.length > 50 ? '...' : '') || 'Untitled'}
+                    {feedback.content.substring(0, 50) + (feedback.content.length > 50 ? '...' : '')}
                   </CardTitle>
                   <div className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getSentimentColor(feedback.sentiment)}`}>
                     {feedback.sentiment || 'Neutral'}
