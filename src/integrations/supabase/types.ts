@@ -1,6 +1,6 @@
 export type Json =
   | string
-  | string
+  | number
   | boolean
   | null
   | { [key: string]: Json | undefined }
@@ -15,12 +15,27 @@ export type Database = {
           content: string | null
         }
         Insert: {
-          actionitem_key: string
+          actionitem_key?: string
           content?: string | null
         }
         Update: {
           actionitem_key?: string
           content?: string | null
+        }
+        Relationships: []
+      }
+      action_items_categories: {
+        Row: {
+          actionitem_category_key: string
+          category: string
+        }
+        Insert: {
+          actionitem_category_key?: string
+          category: string
+        }
+        Update: {
+          actionitem_category_key?: string
+          category?: string
         }
         Relationships: []
       }
@@ -30,8 +45,8 @@ export type Database = {
           insight_key: string
         }
         Insert: {
-          actionitem_key: string
-          insight_key: string
+          actionitem_key?: string
+          insight_key?: string
         }
         Update: {
           actionitem_key?: string
@@ -54,18 +69,18 @@ export type Database = {
           },
         ]
       }
-      actionitems_labels: {
+      actionitems_to_categories: {
         Row: {
+          actionitem_category_key: string
           actionitem_key: string
-          label_key: string
         }
         Insert: {
-          actionitem_key: string
-          label_key: string
+          actionitem_category_key?: string
+          actionitem_key?: string
         }
         Update: {
+          actionitem_category_key?: string
           actionitem_key?: string
-          label_key?: string
         }
         Relationships: [
           {
@@ -76,11 +91,11 @@ export type Database = {
             referencedColumns: ["actionitem_key"]
           },
           {
-            foreignKeyName: "actionitems_labels_label_key_fkey"
-            columns: ["label_key"]
+            foreignKeyName: "actionitems_to_categories_actionitem_category_key_fkey"
+            columns: ["actionitem_category_key"]
             isOneToOne: false
-            referencedRelation: "labels"
-            referencedColumns: ["label_key"]
+            referencedRelation: "action_items_categories"
+            referencedColumns: ["actionitem_category_key"]
           },
         ]
       }
@@ -98,7 +113,7 @@ export type Database = {
           content?: string | null
           "Creation Date"?: string | null
           customer_id?: string | null
-          feedback_key: string
+          feedback_key?: string
           segment?: string | null
           sentiment?: string | null
           source?: string | null
@@ -120,8 +135,8 @@ export type Database = {
           label_key: string
         }
         Insert: {
-          insight_key: string
-          label_key: string
+          insight_key?: string
+          label_key?: string
         }
         Update: {
           insight_key?: string
@@ -151,7 +166,7 @@ export type Database = {
         }
         Insert: {
           content?: string | null
-          insight_key: string
+          insight_key?: string
         }
         Update: {
           content?: string | null
@@ -165,8 +180,8 @@ export type Database = {
           insight_key: string
         }
         Insert: {
-          feedback_key: string
-          insight_key: string
+          feedback_key?: string
+          insight_key?: string
         }
         Update: {
           feedback_key?: string
@@ -196,7 +211,7 @@ export type Database = {
         }
         Insert: {
           label?: string | null
-          label_key: string
+          label_key?: string
         }
         Update: {
           label?: string | null
@@ -209,6 +224,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_action_items_with_insights: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          actionitem_key: string
+          actionitem_content: string
+          insight_key: string
+          insight_content: string
+        }[]
+      }
       get_insights_with_feedbacks: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -219,16 +243,16 @@ export type Database = {
           source: string
           segment: string
           sentiment: string
-          feedback_created_at: string
+          "Creation Date": string
         }[]
       }
-      get_action_items_with_insights: {
-        Args: Record<PropertyKey, never>
+      get_table_columns: {
+        Args: {
+          p_table_name: string
+        }
         Returns: {
-          actionitem_key: string
-          actionitem_content: string
-          insight_key: string
-          insight_content: string
+          column_name: string
+          data_type: string
         }[]
       }
     }
