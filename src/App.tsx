@@ -1,10 +1,12 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import FeedbackHub from "./pages/FeedbackHub";
+import ActionItems from "./pages/ActionItems";
+import Insights from "./pages/Insights";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import SidebarLayout from "./components/app/SidebarLayout";
 
@@ -30,6 +32,9 @@ const App = () => (
           {/* Sidebar Layout routes */}
           <Route element={<SidebarLayout><Outlet /></SidebarLayout>}>
             <Route path="feedback-hub" element={<FeedbackHub />} />
+            <Route path="action-items" element={<ActionItems />} />
+            <Route path="insights" element={<Insights />} />
+            <Route path="chat" element={<Chat />} />
           </Route>
           
           {/* Catch-all route */}

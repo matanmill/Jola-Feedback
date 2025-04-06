@@ -1,16 +1,30 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Send, Bot, User, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface Message {
+  id: string;
+  content: string;
+  role: 'user' | 'assistant';
+  timestamp: Date;
+}
+
+interface UserQuote {
+  id: string;
+  content: string;
+  source: string;
+  sentiment: string;
+}
 
 const Chat = () => {
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([
-    { role: 'assistant', content: 'Hello! I\'m your feedback assistant. How can I help you today?' }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedQuotes, setSelectedQuotes] = useState<UserQuote[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -21,113 +35,167 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const handleSendMessage = () => {
+    if (input.trim()) {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        content: input,
+        role: 'user',
+        timestamp: new Date(),
+      };
+      setMessages([...messages, newMessage]);
+      setInput('');
+      // Here you would typically send the message to your backend
+    }
+  };
 
-    // Add user message
-    const userMessage = { role: 'user' as const, content: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-
-    try {
-      // Simulated response for now
-      // In a real implementation, this would call the ChatGPT API
-      setTimeout(() => {
-        setMessages(prev => [
-          ...prev, 
-          { 
-            role: 'assistant', 
-            content: 'I\'m a simulated response. To connect to the ChatGPT API, you would need to implement the backend integration.' 
-          }
-        ]);
-        setIsLoading(false);
-      }, 1000);
-
-      // Actual implementation would look like this:
-      // const response = await fetch('/api/chat', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ messages: [...messages, userMessage] })
-      // });
-      // const data = await response.json();
-      // setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
-
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setMessages(prev => [
-        ...prev, 
-        { 
-          role: 'assistant', 
-          content: 'Sorry, there was an error processing your request. Please try again.' 
-        }
-      ]);
-      setIsLoading(false);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Card className="h-[calc(100vh-10rem)] flex flex-col">
-        <CardHeader className="border-b bg-gray-50/50">
-          <CardTitle className="text-xl tracking-tight">Chat Assistant</CardTitle>
-        </CardHeader>
-        
-        <CardContent className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-4">
-            {messages.map((message, index) => (
-              <div 
-                key={index} 
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div 
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                    message.role === 'user' 
-                      ? 'bg-blue-100 text-blue-900' 
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  {message.content}
-                </div>
+    <div className="flex h-[calc(100vh-4rem)] bg-background">
+      {/* Main Chat Area */}
+      <div className={cn(
+        "flex-1 flex flex-col transition-all duration-300",
+        isSidebarOpen ? "w-[calc(100%-24rem)]" : "w-full"
+      )}>
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="p-6 space-y-6">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <Bot className="w-8 h-8 text-primary" />
+                    </div>
+                    <h2 className="text-2xl font-semibold mb-2">How can I help you today?</h2>
+                    <p className="text-muted-foreground max-w-md">
+                      Ask me anything about your feedback data, insights, or action items.
+                    </p>
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "flex items-start gap-4",
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      )}
+                    >
+                      {message.role === 'assistant' && (
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Bot className="w-5 h-5 text-primary" />
+                        </div>
+                      )}
+                      <Card className={cn(
+                        "max-w-[80%] p-4 shadow-sm",
+                        message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                      )}>
+                        <p className="text-base leading-relaxed">{message.content}</p>
+                        <span className="text-xs opacity-70 mt-2 block">
+                          {message.timestamp.toLocaleTimeString()}
+                        </span>
+                      </Card>
+                      {message.role === 'user' && (
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <User className="w-5 h-5 text-primary" />
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
               </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-gray-100 text-gray-900">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+            </ScrollArea>
           </div>
-        </CardContent>
-        
-        <CardFooter className="border-t p-4 bg-white">
-          <form onSubmit={handleSubmit} className="flex items-end w-full gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message here..."
-              className="min-h-11 flex-1 resize-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-            />
-            <Button 
-              type="submit" 
-              size="icon" 
-              className="h-11 w-11 rounded-full"
-              disabled={isLoading || !input.trim()}
+
+          <div className="p-6 border-t bg-background">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex gap-2">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Type your message..."
+                  className="flex-1 h-12 text-base"
+                />
+                <Button onClick={handleSendMessage} size="icon" className="h-12 w-12">
+                  <Send className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar */}
+      <div className={cn(
+        "w-96 border-l bg-muted/50 transition-all duration-300",
+        isSidebarOpen ? "translate-x-0" : "translate-x-full"
+      )}>
+        <div className="h-full flex flex-col">
+          <div className="p-6 border-b bg-background flex items-center justify-between">
+            <h2 className="text-xl font-semibold">User Quotes</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSidebarOpen(false)}
+              className="h-8 w-8"
             >
-              <Send className="h-5 w-5" />
+              <ChevronRight className="w-4 h-4" />
             </Button>
-          </form>
-        </CardFooter>
-      </Card>
+          </div>
+
+          <ScrollArea className="flex-1">
+            <div className="p-6 space-y-4">
+              {selectedQuotes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Plus className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">No quotes selected</h3>
+                  <p className="text-muted-foreground max-w-xs">
+                    Select quotes from the chat to see them here
+                  </p>
+                </div>
+              ) : (
+                selectedQuotes.map((quote) => (
+                  <Card key={quote.id} className="p-6 shadow-sm">
+                    <p className="text-base leading-relaxed mb-4">{quote.content}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{quote.source}</span>
+                      <span className={cn(
+                        "text-sm px-3 py-1 rounded-full font-medium",
+                        quote.sentiment === 'positive' ? 'bg-green-100 text-green-800' :
+                        quote.sentiment === 'negative' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      )}>
+                        {quote.sentiment}
+                      </span>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      </div>
+
+      {/* Sidebar Toggle Button */}
+      {!isSidebarOpen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-4 top-20 h-8 w-8"
+          onClick={() => setIsSidebarOpen(true)}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+      )}
     </div>
   );
 };

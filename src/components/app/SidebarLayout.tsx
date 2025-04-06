@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -15,7 +14,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton
 } from '@/components/ui/sidebar';
-import { MessageSquare, Lightbulb, LayoutDashboard, Settings, ChevronDown, ChevronRight, Database, Users } from 'lucide-react';
+import { MessageSquare, Lightbulb, Settings, ChevronDown, ChevronRight, Database, Sparkles } from 'lucide-react';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -32,10 +31,13 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       <div className="min-h-screen flex w-full bg-gray-50">
         <Sidebar>
           <SidebarHeader className="border-b">
-            <div className="flex items-center h-16 px-4">
-              <h1 className="text-xl font-bold tracking-tight">
-                JOLA
-              </h1>
+            <div className="flex items-center h-16 px-6">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-primary" />
+                <h1 className="text-xl font-bold tracking-tight">
+                  JOLA
+                </h1>
+              </div>
             </div>
           </SidebarHeader>
           
@@ -46,10 +48,11 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 <SidebarMenuButton
                   isActive={isFeedbackHubActive}
                   tooltip="Feedback Hub"
+                  className="h-12 text-base"
                 >
-                  <Database />
+                  <Database className="w-5 h-5" />
                   <span>Feedback Hub</span>
-                  {isFeedbackHubActive ? <ChevronDown className="ml-auto h-4 w-4" /> : <ChevronRight className="ml-auto h-4 w-4" />}
+                  {isFeedbackHubActive ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />}
                 </SidebarMenuButton>
                 
                 {isFeedbackHubActive && (
@@ -58,6 +61,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                       <SidebarMenuSubButton
                         asChild
                         isActive={location.pathname === '/feedback-hub'}
+                        className="h-10 text-sm"
                       >
                         <Link to="/feedback-hub">
                           <span>Repository</span>
@@ -69,6 +73,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                       <SidebarMenuSubButton
                         asChild
                         isActive={location.pathname === '/action-items'}
+                        className="h-10 text-sm"
                       >
                         <Link to="/action-items">
                           <span>Action Items</span>
@@ -80,6 +85,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                       <SidebarMenuSubButton
                         asChild
                         isActive={location.pathname === '/insights'}
+                        className="h-10 text-sm"
                       >
                         <Link to="/insights">
                           <span>Insights</span>
@@ -96,9 +102,10 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                   asChild
                   isActive={location.pathname === '/chat'}
                   tooltip="Chat"
+                  className="h-12 text-base"
                 >
                   <Link to="/chat">
-                    <MessageSquare />
+                    <MessageSquare className="w-5 h-5" />
                     <span>Chat</span>
                   </Link>
                 </SidebarMenuButton>
@@ -110,9 +117,10 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                   asChild
                   isActive={location.pathname === '/settings'}
                   tooltip="Settings"
+                  className="h-12 text-base"
                 >
                   <Link to="/settings">
-                    <Settings />
+                    <Settings className="w-5 h-5" />
                     <span>Settings</span>
                   </Link>
                 </SidebarMenuButton>
@@ -121,8 +129,9 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           </SidebarContent>
           
           <SidebarFooter className="border-t">
-            <div className="px-4 py-2 text-xs text-muted-foreground">
-              Jola Feedback Hub v1.0.0
+            <div className="px-6 py-4 text-sm text-muted-foreground">
+              <div className="font-medium">Jola Feedback Hub</div>
+              <div className="text-xs mt-1">v1.0.0</div>
             </div>
           </SidebarFooter>
         </Sidebar>
