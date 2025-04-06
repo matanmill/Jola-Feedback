@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -47,7 +48,7 @@ export function useInsightsData() {
           insightsMap.set(row.insight_key, {
             id: row.insight_key,
             content: row.insight_content || '',
-            created_at: new Date().toISOString(), // Use current date as fallback
+            created_at: row["Creation Date"] ? new Date(row["Creation Date"]).toISOString() : new Date().toISOString(),
             related_feedbacks: [],
             related_feedbacks_data: []
           });
@@ -63,7 +64,7 @@ export function useInsightsData() {
             source: row.source || '',
             segment: row.segment || '',
             sentiment: row.sentiment || '',
-            feedback_created_at: row.feedback_created_at || new Date().toISOString()
+            feedback_created_at: row["Creation Date"] ? new Date(row["Creation Date"]).toISOString() : new Date().toISOString()
           });
         }
       });
