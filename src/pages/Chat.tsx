@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,10 +7,10 @@ import { cn } from '@/lib/utils';
 
 // Sample suggestions for the chat
 const CHAT_SUGGESTIONS = [
-  "How can I improve customer engagement?",
-  "What are the top pain points from recent feedback?",
-  "Show me positive feedback trends from the last month",
-  "Generate a summary of recent customer insights"
+  "What are the common themes in our customer interviews?",
+  "Summarize the key insights from recent feedback",
+  "What are the main pain points mentioned in interviews?",
+  "Show me positive feedback patterns from our interviews"
 ];
 
 // Sample customer quotes for the sidebar
@@ -33,9 +32,17 @@ const CUSTOMER_QUOTES = [
   }
 ];
 
+interface ChatRequest {
+  user_input: string;
+  session_id: string;
+}
+
 const Chat = () => {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([
-    { role: 'assistant', content: 'Hello! I\'m your feedback assistant. How can I help you today?' }
+    { 
+      role: 'assistant', 
+      content: 'Hello! I\'m your feedback assistant powered by RAG technology. I can help you analyze feedback and provide insights based on historical data. How can I help you today?' 
+    }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -61,27 +68,27 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Simulated response for now
-      setTimeout(() => {
-        setMessages(prev => [
-          ...prev, 
-          { 
-            role: 'assistant', 
-            content: 'I\'m a simulated response. In a real implementation, this would connect to the ChatGPT API to provide valuable insights based on your feedback data.' 
-          }
-        ]);
-        setIsLoading(false);
-      }, 1000);
+      // Call your Python backend with RAG implementation
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_input: input,
+          session_id: "default" // You can make this dynamic if needed
+        })
+      });
 
-      // Actual implementation would look like this:
-      // const response = await fetch('/api/chat', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ messages: [...messages, userMessage] })
-      // });
-      // const data = await response.json();
-      // setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
 
+      const data = await response.json();
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: data.response }
+      ]);
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages(prev => [
@@ -91,6 +98,7 @@ const Chat = () => {
           content: 'Sorry, there was an error processing your request. Please try again.' 
         }
       ]);
+    } finally {
       setIsLoading(false);
     }
   };
