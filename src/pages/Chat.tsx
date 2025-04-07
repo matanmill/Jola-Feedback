@@ -69,7 +69,7 @@ const Chat = () => {
 
     try {
       // Call your Python backend with RAG implementation
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch('https://test-python-backend-1.onrender.com/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
