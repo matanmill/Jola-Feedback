@@ -1,13 +1,14 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
-
-type InsightFeedbackResult = Database['public']['Functions']['get_insights_with_feedbacks']['Returns'][number];
 
 export interface Insight {
-  id: string;
+  insight_key: string;
+  title?: string;
   content: string;
   created_at: string;
+  label?: string;
+  label_key?: string;
   related_feedbacks?: string[];
   related_feedbacks_data?: {
     feedback_key: string;
@@ -24,52 +25,66 @@ export function useInsightsData() {
     console.log('Fetching insights data from Supabase');
     
     try {
-      // Use the RPC to fetch insights with their related feedbacks
+      // Get insights with their labels
       const { data, error } = await supabase
-        .rpc('get_insights_with_feedbacks')
-        .returns<InsightFeedbackResult[]>();
+        .from('insights')
+        .select(`
+          insight_key,
+          title,
+          content,
+          insights_labels(label_key),
+          insights_feedbacks(feedback_key)
+        `);
       
       if (error) {
         console.error('Error fetching insights data:', error);
         throw new Error(error.message || 'Failed to fetch insights data');
       }
 
+      // Get all labels for lookup
+      const { data: labelsData, error: labelsError } = await supabase
+        .from('labels')
+        .select('label_key, label');
+        
+      if (labelsError) {
+        console.error('Error fetching labels data:', labelsError);
+        throw new Error(labelsError.message || 'Failed to fetch labels data');
+      }
+      
+      // Create label lookup map
+      const labelMap = labelsData.reduce((acc, item) => {
+        acc[item.label_key] = item.label;
+        return acc;
+      }, {} as Record<string, string>);
+
       if (!data) {
         console.log('No insights data returned');
         return [];
       }
-
-      // Group the results by insight
-      const insightsMap = new Map<string, Insight>();
       
-      data.forEach(row => {
-        if (!insightsMap.has(row.insight_key)) {
-          insightsMap.set(row.insight_key, {
-            id: row.insight_key,
-            content: row.insight_content || '',
-            created_at: new Date().toISOString(), // Use current date as fallback
-            related_feedbacks: [],
-            related_feedbacks_data: []
-          });
+      // Format insights with labels
+      const formattedData: Insight[] = data.map(item => {
+        // Get the first label for this insight (if any)
+        let labelKey = '';
+        let labelText = '';
+        
+        if (item.insights_labels && item.insights_labels.length > 0) {
+          labelKey = item.insights_labels[0].label_key;
+          labelText = labelMap[labelKey] || '';
         }
         
-        const insight = insightsMap.get(row.insight_key)!;
-        
-        if (row.feedback_key) {
-          insight.related_feedbacks?.push(row.feedback_key);
-          insight.related_feedbacks_data?.push({
-            feedback_key: row.feedback_key,
-            feedback_content: row.feedback_content || '',
-            source: row.source || '',
-            segment: row.segment || '',
-            sentiment: row.sentiment || '',
-            feedback_created_at: row.feedback_created_at || new Date().toISOString()
-          });
-        }
+        return {
+          insight_key: item.insight_key,
+          title: item.title || `Insight #${item.insight_key.substring(0, 8)}`,
+          content: item.content || '',
+          created_at: new Date().toISOString(), // Using current date as fallback
+          label: labelText,
+          label_key: labelKey,
+          related_feedbacks: item.insights_feedbacks?.map(f => f.feedback_key) || []
+        };
       });
       
-      const formattedData = Array.from(insightsMap.values());
-      console.log(`Successfully fetched ${formattedData.length} insights with their related feedbacks`);
+      console.log(`Successfully fetched ${formattedData.length} insights with their labels`);
       return formattedData;
     } catch (error) {
       console.error('Exception fetching insights data:', error);

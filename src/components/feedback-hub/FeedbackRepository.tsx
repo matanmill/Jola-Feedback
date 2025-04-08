@@ -1,13 +1,34 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, MessageSquare, Tag } from 'lucide-react';
+import { 
+  Loader2, 
+  ChevronDown, 
+  ChevronUp, 
+  MessageSquare, 
+  Building, 
+  DollarSign, 
+  Users,
+  UserRound,
+  Filter
+} from 'lucide-react';
 import { useFeedbackData, Feedback } from '@/hooks/use-feedback-data';
-import { FeedbackDetail } from '@/components/feedback-hub/FeedbackDetail';
 import DebugPanel from '@/components/feedback-hub/DebugPanel';
+import { 
+  Collapsible, 
+  CollapsibleContent, 
+  CollapsibleTrigger 
+} from '@/components/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FeedbackRepositoryProps {
   isDebugMode: boolean;
@@ -15,14 +36,9 @@ interface FeedbackRepositoryProps {
 
 const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) => {
   const { toast } = useToast();
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [roleFilter, setRoleFilter] = useState<string | null>(null);
   
-  // Filters
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
-  const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
-  const [selectedSentiment, setSelectedSentiment] = useState<string | null>(null);
-
   const { 
     data: feedbacks = [], 
     isLoading, 
@@ -30,12 +46,13 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
     refetch 
   } = useFeedbackData();
 
-  // Filter feedbacks based on selected filters
+  // Get unique roles for the filter dropdown
+  const uniqueRoles = [...new Set(feedbacks.map(fb => fb.role).filter(Boolean))];
+
+  // Filter feedbacks based on selected filter
   const filteredFeedbacks = feedbacks.filter(feedback => {
-    const sourceMatch = !selectedSource || feedback.source === selectedSource;
-    const segmentMatch = !selectedSegment || feedback.segment === selectedSegment;
-    const sentimentMatch = !selectedSentiment || feedback.sentiment === selectedSentiment;
-    return sourceMatch && segmentMatch && sentimentMatch;
+    const roleMatch = !roleFilter || feedback.role === roleFilter;
+    return roleMatch;
   });
 
   // Handle errors
@@ -49,22 +66,18 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
     }
   }, [error, toast]);
 
-  const handleFeedbackClick = (feedback: Feedback) => {
-    setSelectedFeedback(feedback);
-    setIsDetailOpen(true);
+  const handleItemClick = (id: string) => {
+    if (expandedId === id) {
+      setExpandedId(null);
+    } else {
+      setExpandedId(id);
+    }
   };
 
-  const getSentimentColor = (sentiment: string | undefined) => {
-    switch (sentiment?.toLowerCase()) {
-      case 'positive':
-        return 'bg-green-500';
-      case 'negative':
-        return 'bg-red-500';
-      case 'mixed':
-        return 'bg-amber-500';
-      default:
-        return 'bg-blue-500';
-    }
+  // Function to truncate text
+  const truncateText = (text: string, maxLength: number) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
   return (
@@ -76,15 +89,34 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
             feedbacks, 
             filteredCount: filteredFeedbacks.length,
             activeFilters: {
-              source: selectedSource,
-              segment: selectedSegment,
-              sentiment: selectedSentiment
+              role: roleFilter
             },
             error: error?.message || null
           }} 
           onRefresh={() => refetch()}
         />
       )}
+
+      {/* Filters */}
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center">
+          <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Filter by:</span>
+        </div>
+        <Select value={roleFilter || ''} onValueChange={(value) => setRoleFilter(value || null)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="">All Roles</SelectItem>
+              {uniqueRoles.map((role) => (
+                <SelectItem key={role} value={role}>{role}</SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Feedback List */}
       {isLoading ? (
@@ -99,58 +131,88 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredFeedbacks.map((feedback) => (
-            <Card 
-              key={feedback.id} 
-              className="cursor-pointer hover:shadow-md transition-shadow border-0 shadow-sm"
-              onClick={() => handleFeedbackClick(feedback)}
-            >
-              <CardHeader className="pb-2 bg-white rounded-t-lg">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg line-clamp-2">
-                    {feedback.content.substring(0, 50) + (feedback.content.length > 50 ? '...' : '')}
-                  </CardTitle>
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getSentimentColor(feedback.sentiment)}`}>
-                    {feedback.sentiment || 'Neutral'}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pb-2">
-                <p className="text-sm text-muted-foreground line-clamp-3">
-                  {feedback.content || 'No content available'}
-                </p>
-              </CardContent>
-              <CardFooter className="pt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                {feedback.source && (
-                  <Badge variant="secondary" className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700">
-                    <MessageSquare className="h-3 w-3" />
-                    {feedback.source}
-                  </Badge>
-                )}
-                {feedback.segment && (
-                  <Badge 
-                    variant="secondary" 
-                    className={`flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 ${selectedSegment === feedback.segment ? 'border-primary' : ''}`}
+        <div className="border rounded-md overflow-hidden">
+          {/* Header row */}
+          <div className="grid grid-cols-5 bg-muted px-4 py-3 font-medium text-sm">
+            <div>Name</div>
+            <div>Company</div>
+            <div>Company ARR</div>
+            <div>Employee Count</div>
+            <div>Content</div>
+          </div>
+          
+          {/* Scrollable list */}
+          <div className="max-h-[70vh] overflow-y-auto">
+            {filteredFeedbacks.map((feedback) => (
+              <Collapsible 
+                key={feedback.feedback_key}
+                open={expandedId === feedback.feedback_key}
+                onOpenChange={() => handleItemClick(feedback.feedback_key)}
+                className="border-b last:border-b-0"
+              >
+                <CollapsibleTrigger asChild>
+                  <div 
+                    className="grid grid-cols-5 px-4 py-3 hover:bg-slate-50 cursor-pointer"
                   >
-                    <Tag className="h-3 w-3" />
-                    {feedback.segment}
-                  </Badge>
-                )}
-              </CardFooter>
-            </Card>
-          ))}
+                    <div className="flex items-center gap-2">
+                      <UserRound className="h-4 w-4 text-slate-400" />
+                      <span>{feedback.name || 'Anonymous'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4 text-slate-400" />
+                      <span>{feedback.company || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-slate-400" />
+                      <span>{feedback.company_arr || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-slate-400" />
+                      <span>{feedback.employee_count || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="truncate">{truncateText(feedback.content || '', 50)}</span>
+                      {expandedId === feedback.feedback_key ? (
+                        <ChevronUp className="h-4 w-4 ml-2 flex-shrink-0" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 ml-2 flex-shrink-0" />
+                      )}
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="p-4 bg-slate-50 space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Role</h3>
+                      {feedback.role ? (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          {feedback.role}
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Not specified</span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Source</h3>
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4 text-slate-400" />
+                        <span className="text-sm">{feedback.source || 'Unknown source'}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Full Content</h3>
+                      <p className="text-sm whitespace-pre-wrap">{feedback.content || 'No content available'}</p>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Created: {new Date(feedback.created_at).toLocaleDateString()} {new Date(feedback.created_at).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
+          </div>
         </div>
       )}
-
-      {/* Feedback Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          {selectedFeedback && (
-            <FeedbackDetail feedback={selectedFeedback} />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

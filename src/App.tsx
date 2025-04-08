@@ -5,6 +5,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import FeedbackHub from "./pages/FeedbackHub";
+import Insights from "./pages/Insights";
+import ActionItems from "./pages/ActionItems";
+import FeatureDiscovery from "./pages/FeatureDiscovery";
+import SuccessStories from "./pages/SuccessStories";
+import InsightsByLabel from "./pages/InsightsByLabel";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -32,6 +37,11 @@ const App = () => (
           {/* Sidebar Layout routes */}
           <Route element={<SidebarLayout><Outlet /></SidebarLayout>}>
             <Route path="feedback-hub" element={<FeedbackHub />} />
+            <Route path="insights" element={<Insights />} />
+            <Route path="insights/:labelId" element={<InsightsByLabel />} />
+            <Route path="feature-discovery" element={<FeatureDiscovery />} />
+            <Route path="success-stories" element={<SuccessStories />} />
+            <Route path="action-items" element={<ActionItems />} />
             <Route path="chat" element={<Chat />} />
             <Route path="settings" element={<Settings />} />
           </Route>

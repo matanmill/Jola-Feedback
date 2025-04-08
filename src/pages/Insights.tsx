@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useInsightsData, Insight } from '@/hooks/use-insights-data';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -6,38 +7,17 @@ import { Loader2, Lightbulb, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { getFirstNWords } from '@/lib/utils';
-
-// Update the Insight interface to match the one from use-insights-data
-interface InsightWithFeedbacks extends Insight {
-  related_feedbacks_data: {
-    feedback_key: number;
-    feedback_content: string;
-    source: string;
-    segment: string;
-    sentiment: string;
-    feedback_created_at: string;
-  }[];
-}
-
-interface UseInsightsDataResult {
-  data: InsightWithFeedbacks[];
-  isLoading: boolean;
-  error: any;
-  isSuccess: boolean;
-  refetch: () => void;
-}
 
 const Insights = () => {
   const { toast } = useToast();
-  const { data: insights = [], isLoading, error, isSuccess, refetch } = useInsightsData() as UseInsightsDataResult;
+  const { data: insights = [], isLoading, error, isSuccess, refetch } = useInsightsData();
   
-  const [selectedInsight, setSelectedInsight] = useState<InsightWithFeedbacks | null>(null);
+  const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Handle click on an insight
-  const handleInsightClick = (insight: InsightWithFeedbacks) => {
+  const handleInsightClick = (insight: Insight) => {
     setSelectedInsight(insight);
     setIsDialogOpen(true);
   };
@@ -93,7 +73,10 @@ const Insights = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Insights</h2>
+        <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <Lightbulb className="h-6 w-6" />
+          <span>Insights</span>
+        </h2>
         <Button 
           onClick={handleGenerateInsights} 
           disabled={isGenerating}
@@ -128,14 +111,14 @@ const Insights = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {insights.map(insight => (
             <Card 
-              key={insight.id} 
+              key={insight.insight_key} 
               className="border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => handleInsightClick(insight)}
             >
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
                 <CardTitle className="text-lg">
-                  {getFirstNWords(insight.content) || `Insight #${insight.id}`}
+                  {insight.title || `Insight #${insight.insight_key.substring(0, 8)}`}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -147,9 +130,9 @@ const Insights = () => {
                     <Badge variant="outline" className="bg-gray-50">
                       {new Date(insight.created_at).toLocaleDateString()}
                     </Badge>
-                    {insight.related_feedbacks && insight.related_feedbacks.length > 0 && (
+                    {insight.label && (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        {insight.related_feedbacks.length} related feedback{insight.related_feedbacks.length !== 1 ? 's' : ''}
+                        {insight.label}
                       </Badge>
                     )}
                   </div>
@@ -166,7 +149,7 @@ const Insights = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-amber-500" />
-              {selectedInsight ? getFirstNWords(selectedInsight.content) || `Insight #${selectedInsight.id}` : 'Insight Details'}
+              {selectedInsight?.title || 'Insight Details'}
             </DialogTitle>
             <DialogDescription>
               View detailed information about this insight
@@ -180,61 +163,19 @@ const Insights = () => {
                 <p className="text-base">{selectedInsight.content}</p>
               </div>
               
+              {selectedInsight.label && (
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Label</h3>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                    {selectedInsight.label}
+                  </Badge>
+                </div>
+              )}
+              
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">Created</h3>
                 <p className="text-sm">{new Date(selectedInsight.created_at).toLocaleString()}</p>
               </div>
-              
-              {(selectedInsight.related_feedbacks_data?.length > 0 || selectedInsight.related_feedbacks?.length > 0) && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Related Feedbacks</h3>
-                  <div className="border rounded-md">
-                    <table className="w-full">
-                      <thead className="bg-muted/50">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-sm font-medium">Content</th>
-                          <th className="px-4 py-2 text-left text-sm font-medium">Source</th>
-                          <th className="px-4 py-2 text-left text-sm font-medium">Segment</th>
-                          <th className="px-4 py-2 text-left text-sm font-medium">Sentiment</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {(selectedInsight.related_feedbacks_data || []).map(feedback => (
-                          <tr key={feedback.feedback_key} className="hover:bg-muted/30">
-                            <td className="px-4 py-2">
-                              <div className="max-h-24 overflow-y-auto text-sm">
-                                {feedback.feedback_content}
-                              </div>
-                            </td>
-                            <td className="px-4 py-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {feedback.source}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {feedback.segment}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-2">
-                              <Badge 
-                                variant="outline" 
-                                className={`${
-                                  feedback.sentiment.toLowerCase() === 'positive' ? 'bg-green-50 text-green-700' :
-                                  feedback.sentiment.toLowerCase() === 'negative' ? 'bg-red-50 text-red-700' :
-                                  'bg-gray-50 text-gray-700'
-                                }`}
-                              >
-                                {feedback.sentiment}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
               
               <div className="flex justify-end pt-4">
                 <Button onClick={() => setIsDialogOpen(false)}>Close</Button>

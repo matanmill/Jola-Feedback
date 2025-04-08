@@ -1,14 +1,13 @@
 
 export interface Feedback {
-  id: string | number;
-  title: string;
+  feedback_key: string;
   content?: string;
-  sentiment?: string;
   source?: string;
-  segment?: string;
-  client?: string;
-  customer_name?: string;
-  customer_email?: string;
+  name?: string;
+  company?: string;
+  company_arr?: string;
+  employee_count?: string;
+  role?: string;
   created_at?: string;
   [key: string]: any;  // For additional properties
 }

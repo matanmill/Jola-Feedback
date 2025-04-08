@@ -3,11 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Feedback {
-  id: number;
+  feedback_key: string;
   content: string;
   source?: string;
-  segment?: string;
-  sentiment?: string;
+  name?: string;
+  company?: string;
+  company_arr?: string;
+  employee_count?: string;
+  role?: string;
   created_at: string;
 }
 
@@ -18,7 +21,7 @@ export function useFeedbackData() {
     try {
       const { data, error } = await supabase
         .from('feedbacks')
-        .select('feedback_key, content, source, segment, sentiment, "Creation Date"');
+        .select('feedback_key, content, source, name, company, company_arr, employee_count, role, created_at');
       
       if (error) {
         console.error('Error fetching feedback data:', error);
@@ -29,12 +32,15 @@ export function useFeedbackData() {
       
       // Transform data to match Feedback interface
       const formattedData: Feedback[] = data?.map(item => ({
-        id: item.feedback_key,
+        feedback_key: item.feedback_key,
         content: item.content || '',
         source: item.source || 'Unknown',
-        sentiment: item.sentiment || 'neutral',
-        segment: item.segment || '',
-        created_at: item["Creation Date"] || new Date().toISOString()
+        name: item.name || 'Anonymous',
+        company: item.company || '',
+        company_arr: item.company_arr || '',
+        employee_count: item.employee_count || '',
+        role: item.role || '',
+        created_at: item.created_at || new Date().toISOString()
       })) || [];
       
       return formattedData;
