@@ -32,7 +32,7 @@ const InsightsByLabel = () => {
       <div>
         <h1 className="text-3xl font-bold">Insights: {labelId}</h1>
         <p className="text-muted-foreground mt-2">
-          Displaying insights for the category {labelId}
+          Displaying insights for the category "{labelId}"
         </p>
       </div>
 

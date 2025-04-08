@@ -99,6 +99,83 @@ export type Database = {
           },
         ]
       }
+      feature_evidence: {
+        Row: {
+          company: string | null
+          company_arr: string | null
+          content: string | null
+          detailed_role: string | null
+          employee_count: string | null
+          feature_id: string | null
+          feedback_key: string | null
+          file_id: string | null
+          id: string
+          name: string | null
+          role: string | null
+          source: string | null
+        }
+        Insert: {
+          company?: string | null
+          company_arr?: string | null
+          content?: string | null
+          detailed_role?: string | null
+          employee_count?: string | null
+          feature_id?: string | null
+          feedback_key?: string | null
+          file_id?: string | null
+          id?: string
+          name?: string | null
+          role?: string | null
+          source?: string | null
+        }
+        Update: {
+          company?: string | null
+          company_arr?: string | null
+          content?: string | null
+          detailed_role?: string | null
+          employee_count?: string | null
+          feature_id?: string | null
+          feedback_key?: string | null
+          file_id?: string | null
+          id?: string
+          name?: string | null
+          role?: string | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_evidence_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "feature_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_requests: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          role: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          role?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          role?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       feedbacks: {
         Row: {
           company: string | null
@@ -149,19 +226,22 @@ export type Database = {
           chunk_key: string
           content: string | null
           embedding: string | null
-          feedbacks_key: string
+          feedback_key: string
+          file_id: string | null
         }
         Insert: {
           chunk_key?: string
           content?: string | null
           embedding?: string | null
-          feedbacks_key?: string
+          feedback_key?: string
+          file_id?: string | null
         }
         Update: {
           chunk_key?: string
           content?: string | null
           embedding?: string | null
-          feedbacks_key?: string
+          feedback_key?: string
+          file_id?: string | null
         }
         Relationships: []
       }
