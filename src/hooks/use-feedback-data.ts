@@ -1,9 +1,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Feedback } from '@/types/feedback';
+import type { Feedback } from '@/types/feedback';
 
-export { Feedback };
+export type { Feedback };
 
 export function useFeedbackData() {
   const fetchFeedbacks = async (): Promise<Feedback[]> => {

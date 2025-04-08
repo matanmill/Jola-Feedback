@@ -9,5 +9,4 @@ export interface Feedback {
   employee_count?: string;
   role?: string;
   created_at?: string;
-  [key: string]: any;  // For additional properties
 }
