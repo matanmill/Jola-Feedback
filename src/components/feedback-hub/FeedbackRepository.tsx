@@ -12,7 +12,8 @@ import {
   DollarSign, 
   Users,
   UserRound,
-  Filter
+  Filter,
+  BriefcaseBusiness
 } from 'lucide-react';
 import { useFeedbackData, Feedback } from '@/hooks/use-feedback-data';
 import DebugPanel from '@/components/feedback-hub/DebugPanel';
@@ -98,7 +99,7 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
       )}
 
       {/* Filters */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4 mb-4 bg-slate-50 p-4 rounded-lg shadow-sm border">
         <div className="flex items-center">
           <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Filter by:</span>
@@ -111,7 +112,7 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
             <SelectGroup>
               <SelectItem value="all">All Roles</SelectItem>
               {uniqueRoles.map((role) => (
-                <SelectItem key={role} value={role}>{role}</SelectItem>
+                role && <SelectItem key={role} value={role}>{role}</SelectItem>
               ))}
             </SelectGroup>
           </SelectContent>
@@ -131,18 +132,19 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
           </p>
         </div>
       ) : (
-        <div className="border rounded-md overflow-hidden">
+        <div className="border rounded-md overflow-hidden shadow-sm">
           {/* Header row */}
-          <div className="grid grid-cols-5 bg-muted px-4 py-3 font-medium text-sm">
+          <div className="grid grid-cols-6 bg-slate-100 px-4 py-3 font-medium text-sm">
             <div>Name</div>
             <div>Company</div>
             <div>Company ARR</div>
             <div>Employee Count</div>
+            <div>Role</div>
             <div>Content</div>
           </div>
           
           {/* Scrollable list */}
-          <div className="max-h-[70vh] overflow-y-auto">
+          <div className="max-h-[70vh] overflow-y-auto bg-white">
             {filteredFeedbacks.map((feedback) => (
               <Collapsible 
                 key={feedback.feedback_key}
@@ -152,7 +154,7 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
               >
                 <CollapsibleTrigger asChild>
                   <div 
-                    className="grid grid-cols-5 px-4 py-3 hover:bg-slate-50 cursor-pointer"
+                    className="grid grid-cols-6 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <UserRound className="h-4 w-4 text-slate-400" />
@@ -169,6 +171,15 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-slate-400" />
                       <span>{feedback.employee_count || 'N/A'}</span>
+                    </div>
+                    <div>
+                      {feedback.role ? (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          {feedback.role}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">N/A</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="truncate">{truncateText(feedback.content || '', 50)}</span>
@@ -201,7 +212,9 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-muted-foreground mb-1">Full Content</h3>
-                      <p className="text-sm whitespace-pre-wrap">{feedback.content || 'No content available'}</p>
+                      <p className="text-sm whitespace-pre-wrap p-3 bg-white border rounded-md">
+                        {feedback.content || 'No content available'}
+                      </p>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       Created: {new Date(feedback.created_at).toLocaleDateString()} {new Date(feedback.created_at).toLocaleTimeString()}

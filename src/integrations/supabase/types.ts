@@ -198,16 +198,19 @@ export type Database = {
       insights: {
         Row: {
           content: string | null
+          created_at: string | null
           insight_key: string
           Title: string | null
         }
         Insert: {
           content?: string | null
+          created_at?: string | null
           insight_key?: string
           Title?: string | null
         }
         Update: {
           content?: string | null
+          created_at?: string | null
           insight_key?: string
           Title?: string | null
         }
@@ -281,12 +284,24 @@ export type Database = {
         Returns: {
           insight_key: string
           insight_content: string
+          title: string
+          insight_created_at: string
           feedback_key: string
           feedback_content: string
           source: string
-          segment: string
-          sentiment: string
-          "Creation Date": string
+          role: string
+          feedback_created_at: string
+        }[]
+      }
+      get_insights_with_labels: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          insight_key: string
+          content: string
+          title: string
+          created_at: string
+          label_key: string
+          label: string
         }[]
       }
       get_table_columns: {

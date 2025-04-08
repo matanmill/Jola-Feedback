@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface Insight {
   insight_key: string;
   content: string;
-  Title?: string; // Note: column name is 'Title' (capital T) in the Supabase table
+  Title?: string;
   labels?: string[];
 }
 
@@ -16,62 +16,69 @@ export interface InsightWithLabelDetails extends Insight {
   }[];
 }
 
+export interface InsightWithFeedback {
+  insight_key: string;
+  insight_content: string;
+  title: string;
+  insight_created_at: string;
+  feedback_key: string;
+  feedback_content: string;
+  source: string;
+  role: string;
+  feedback_created_at: string;
+}
+
+export interface InsightWithLabels {
+  insight_key: string;
+  content: string;
+  title: string;
+  created_at: string;
+  label_key: string;
+  label: string;
+}
+
 export function useInsightsData(labelFilter?: string) {
   const fetchInsights = async (): Promise<InsightWithLabelDetails[]> => {
     try {
-      console.log('Fetching insights data from Supabase...');
+      console.log('Fetching insights with labels data from Supabase...');
       
-      // First, fetch insights
-      const { data: insightsData, error: insightsError } = await supabase
-        .from('insights')
-        .select('insight_key, content, Title');
+      // Use the get_insights_with_labels function
+      const { data: insightsWithLabelsData, error: insightsWithLabelsError } = await supabase
+        .rpc('get_insights_with_labels');
         
-      if (insightsError) {
-        console.error('Error fetching insights:', insightsError);
-        throw new Error(insightsError.message);
+      if (insightsWithLabelsError) {
+        console.error('Error fetching insights with labels:', insightsWithLabelsError);
+        throw new Error(insightsWithLabelsError.message);
       }
       
-      // Fetch all insights_labels and labels data to create the relationship
-      const { data: insightLabelsData, error: labelsError } = await supabase
-        .from('insight_labels')
-        .select(`
-          insight_key,
-          label_key,
-          labels (
-            label_key,
-            label
-          )
-        `);
-        
-      if (labelsError) {
-        console.error('Error fetching labels:', labelsError);
-        throw new Error(labelsError.message);
-      }
+      console.log('Insights with labels data:', insightsWithLabelsData);
       
-      // Group labels by insight_key
-      const insightLabelsMap = new Map();
-      insightLabelsData?.forEach(item => {
-        const labelInfo = {
-          label_key: item.labels.label_key,
-          label: item.labels.label
-        };
-        
-        if (!insightLabelsMap.has(item.insight_key)) {
-          insightLabelsMap.set(item.insight_key, []);
+      // Group by insight_key to create the right structure
+      const insightMap = new Map<string, InsightWithLabelDetails>();
+      
+      insightsWithLabelsData.forEach((item: InsightWithLabels) => {
+        if (!insightMap.has(item.insight_key)) {
+          insightMap.set(item.insight_key, {
+            insight_key: item.insight_key,
+            content: item.content,
+            Title: item.title,
+            labels: [],
+            label_details: []
+          });
         }
-        insightLabelsMap.get(item.insight_key).push(labelInfo);
+        
+        const insight = insightMap.get(item.insight_key)!;
+        if (item.label) {
+          insight.labels = insight.labels || [];
+          insight.labels.push(item.label);
+          insight.label_details.push({
+            label_key: item.label_key,
+            label: item.label
+          });
+        }
       });
       
-      // Create final insights with label details
-      const insights: InsightWithLabelDetails[] = insightsData.map(insight => {
-        return {
-          insight_key: insight.insight_key,
-          content: insight.content || '',
-          Title: insight.Title || '',
-          labels: insightLabelsMap.get(insight.insight_key)?.map(l => l.label) || [],
-          label_details: insightLabelsMap.get(insight.insight_key) || []
-        };
-      });
+      const insights = Array.from(insightMap.values());
       
       // Apply label filter if provided
       if (labelFilter) {
@@ -80,9 +87,8 @@ export function useInsightsData(labelFilter?: string) {
         );
       }
       
-      console.log(`Successfully fetched ${insights.length} insights`);
+      console.log(`Successfully fetched ${insights.length} insights with their labels`);
       return insights;
-      
     } catch (error) {
       console.error('Error in useInsightsData:', error);
       throw error;
@@ -92,6 +98,44 @@ export function useInsightsData(labelFilter?: string) {
   return useQuery({
     queryKey: ['insights', labelFilter],
     queryFn: fetchInsights
+  });
+}
+
+export function useInsightFeedbacksData(insightKey?: string) {
+  const fetchInsightFeedbacks = async (): Promise<InsightWithFeedback[]> => {
+    try {
+      if (!insightKey) {
+        return [];
+      }
+      
+      console.log(`Fetching feedbacks for insight ${insightKey}...`);
+      
+      const { data, error } = await supabase
+        .rpc('get_insights_with_feedbacks');
+      
+      if (error) {
+        console.error('Error fetching insight feedbacks:', error);
+        throw new Error(error.message);
+      }
+      
+      // Filter to only get feedbacks for the specific insight
+      const relatedFeedbacks = data.filter((item: InsightWithFeedback) => 
+        item.insight_key === insightKey
+      );
+      
+      console.log(`Found ${relatedFeedbacks.length} feedbacks for insight ${insightKey}`);
+      
+      return relatedFeedbacks;
+    } catch (error) {
+      console.error('Error in useInsightFeedbacksData:', error);
+      throw error;
+    }
+  };
+  
+  return useQuery({
+    queryKey: ['insightFeedbacks', insightKey],
+    queryFn: fetchInsightFeedbacks,
+    enabled: !!insightKey
   });
 }
 

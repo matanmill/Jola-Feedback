@@ -19,12 +19,10 @@ import { formatDate } from '@/lib/utils';
 import { 
   MessageSquare, 
   Calendar, 
-  Tag, 
-  User, 
-  Building,
-  ThumbsUp,
-  ThumbsDown,
-  AlertCircle
+  Building, 
+  Users,
+  UserRound,
+  BriefcaseBusiness
 } from 'lucide-react';
 
 interface FeedbackDetailProps {
@@ -32,38 +30,11 @@ interface FeedbackDetailProps {
 }
 
 export const FeedbackDetail: React.FC<FeedbackDetailProps> = ({ feedback }) => {
-  const getSentimentIcon = (sentiment: string) => {
-    switch (sentiment?.toLowerCase()) {
-      case 'positive':
-        return <ThumbsUp className="h-5 w-5 text-sentiment-positive" />;
-      case 'negative':
-        return <ThumbsDown className="h-5 w-5 text-sentiment-negative" />;
-      case 'mixed':
-        return <AlertCircle className="h-5 w-5 text-sentiment-mixed" />;
-      default:
-        return null;
-    }
-  };
-
-  const getSentimentTextColor = (sentiment: string) => {
-    switch (sentiment?.toLowerCase()) {
-      case 'positive':
-        return 'text-sentiment-positive';
-      case 'negative':
-        return 'text-sentiment-negative';
-      case 'mixed':
-        return 'text-sentiment-mixed';
-      default:
-        return 'text-sentiment-neutral';
-    }
-  };
-
   return (
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2 text-xl">
-          {feedback.title}
-          {feedback.sentiment && getSentimentIcon(feedback.sentiment)}
+          Feedback from {feedback.name || 'Anonymous'}
         </DialogTitle>
         <DialogDescription>
           <div className="flex flex-wrap gap-2 mt-2">
@@ -79,21 +50,16 @@ export const FeedbackDetail: React.FC<FeedbackDetailProps> = ({ feedback }) => {
                 {formatDate(feedback.created_at)}
               </Badge>
             )}
-            {feedback.client && (
+            {feedback.company && (
               <Badge variant="outline" className="flex items-center gap-1">
                 <Building className="h-3 w-3" />
-                {feedback.client}
+                {feedback.company}
               </Badge>
             )}
-            {feedback.segment && (
+            {feedback.role && (
               <Badge variant="outline" className="flex items-center gap-1">
-                <Tag className="h-3 w-3" />
-                {feedback.segment}
-              </Badge>
-            )}
-            {feedback.sentiment && (
-              <Badge variant="outline" className={`flex items-center gap-1 ${getSentimentTextColor(feedback.sentiment)}`}>
-                {feedback.sentiment}
+                <BriefcaseBusiness className="h-3 w-3" />
+                {feedback.role}
               </Badge>
             )}
           </div>
@@ -117,24 +83,30 @@ export const FeedbackDetail: React.FC<FeedbackDetailProps> = ({ feedback }) => {
         
         {/* Metadata Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Customer Information */}
-          {(feedback.customer_name || feedback.customer_email) && (
+          {/* Company Information */}
+          {(feedback.company || feedback.company_arr || feedback.employee_count) && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Customer Information</CardTitle>
+                <CardTitle className="text-sm">Company Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <dl className="space-y-2">
-                  {feedback.customer_name && (
+                  {feedback.company && (
                     <div className="flex justify-between">
-                      <dt className="text-sm font-medium text-muted-foreground">Name:</dt>
-                      <dd className="text-sm">{feedback.customer_name}</dd>
+                      <dt className="text-sm font-medium text-muted-foreground">Company:</dt>
+                      <dd className="text-sm">{feedback.company}</dd>
                     </div>
                   )}
-                  {feedback.customer_email && (
+                  {feedback.company_arr && (
                     <div className="flex justify-between">
-                      <dt className="text-sm font-medium text-muted-foreground">Email:</dt>
-                      <dd className="text-sm">{feedback.customer_email}</dd>
+                      <dt className="text-sm font-medium text-muted-foreground">Company ARR:</dt>
+                      <dd className="text-sm">{feedback.company_arr}</dd>
+                    </div>
+                  )}
+                  {feedback.employee_count && (
+                    <div className="flex justify-between">
+                      <dt className="text-sm font-medium text-muted-foreground">Employee Count:</dt>
+                      <dd className="text-sm">{feedback.employee_count}</dd>
                     </div>
                   )}
                 </dl>
@@ -142,7 +114,7 @@ export const FeedbackDetail: React.FC<FeedbackDetailProps> = ({ feedback }) => {
             </Card>
           )}
           
-          {/* Additional Information - will display any other properties in the feedback object */}
+          {/* Additional Information */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Additional Details</CardTitle>
@@ -150,8 +122,8 @@ export const FeedbackDetail: React.FC<FeedbackDetailProps> = ({ feedback }) => {
             <CardContent>
               <dl className="space-y-2">
                 {Object.entries(feedback)
-                  .filter(([key]) => !['id', 'title', 'content', 'sentiment', 'source', 'segment', 'client',
-                                      'customer_name', 'customer_email', 'created_at'].includes(key))
+                  .filter(([key]) => !['feedback_key', 'content', 'source', 'name',
+                                      'company', 'company_arr', 'employee_count', 'role', 'created_at'].includes(key))
                   .map(([key, value]) => value && (
                     <div key={key} className="flex justify-between">
                       <dt className="text-sm font-medium text-muted-foreground">
@@ -161,8 +133,8 @@ export const FeedbackDetail: React.FC<FeedbackDetailProps> = ({ feedback }) => {
                     </div>
                   ))}
                 {Object.entries(feedback)
-                  .filter(([key]) => !['id', 'title', 'content', 'sentiment', 'source', 'segment', 'client',
-                                      'customer_name', 'customer_email', 'created_at'].includes(key) && !!feedback[key])
+                  .filter(([key]) => !['feedback_key', 'content', 'source', 'name',
+                                      'company', 'company_arr', 'employee_count', 'role', 'created_at'].includes(key) && !!feedback[key])
                   .length === 0 && (
                     <p className="text-sm text-muted-foreground italic">No additional details available</p>
                   )}
