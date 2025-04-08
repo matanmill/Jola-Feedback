@@ -103,13 +103,13 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
           <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Filter by:</span>
         </div>
-        <Select value={roleFilter || ''} onValueChange={(value) => setRoleFilter(value || null)}>
+        <Select value={roleFilter || 'all'} onValueChange={(value) => setRoleFilter(value === 'all' ? null : value)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="">All Roles</SelectItem>
+              <SelectItem value="all">All Roles</SelectItem>
               {uniqueRoles.map((role) => (
                 <SelectItem key={role} value={role}>{role}</SelectItem>
               ))}
