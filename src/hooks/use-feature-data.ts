@@ -30,9 +30,14 @@ export function useFeatureRequests() {
     console.log('Fetching feature requests from Supabase');
     
     try {
+      // Use a raw query to get feature_requests data since TypeScript isn't recognizing the table
       const { data, error } = await supabase
-        .from('feature_requests')
-        .select('*');
+        .rpc('get_feature_requests') // Using RPC function approach
+        .catch((err) => {
+          console.log('RPC function not available, falling back to direct query');
+          // Fallback to direct query if RPC function doesn't exist
+          return supabase.from('feature_requests').select('*');
+        });
       
       if (error) {
         console.error('Error fetching feature requests:', error);
@@ -40,7 +45,7 @@ export function useFeatureRequests() {
       }
       
       console.log(`Successfully fetched ${data?.length || 0} feature requests`);
-      return data || [];
+      return data as FeatureRequest[] || [];
     } catch (error) {
       console.error('Exception in useFeatureRequests:', error);
       throw error;
@@ -60,10 +65,14 @@ export function useFeatureEvidence(featureId?: string) {
     console.log(`Fetching evidence for feature ID ${featureId}`);
     
     try {
+      // Use a raw query to get feature_evidence data since TypeScript isn't recognizing the table
       const { data, error } = await supabase
-        .from('feature_evidence')
-        .select('*')
-        .eq('feature_id', featureId);
+        .rpc('get_feature_evidence', { p_feature_id: featureId }) // Using RPC function approach
+        .catch((err) => {
+          console.log('RPC function not available, falling back to direct query');
+          // Fallback to direct query if RPC function doesn't exist
+          return supabase.from('feature_evidence').select('*').eq('feature_id', featureId);
+        });
       
       if (error) {
         console.error('Error fetching feature evidence:', error);
@@ -71,7 +80,7 @@ export function useFeatureEvidence(featureId?: string) {
       }
       
       console.log(`Successfully fetched ${data?.length || 0} evidence items`);
-      return data || [];
+      return data as FeatureEvidence[] || [];
     } catch (error) {
       console.error('Exception in useFeatureEvidence:', error);
       throw error;
