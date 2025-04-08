@@ -32,12 +32,8 @@ export function useFeatureRequests() {
     try {
       // Use a raw query to get feature_requests data since TypeScript isn't recognizing the table
       const { data, error } = await supabase
-        .rpc('get_feature_requests') // Using RPC function approach
-        .catch((err) => {
-          console.log('RPC function not available, falling back to direct query');
-          // Fallback to direct query if RPC function doesn't exist
-          return supabase.from('feature_requests').select('*');
-        });
+        .from('feature_requests')
+        .select('*');
       
       if (error) {
         console.error('Error fetching feature requests:', error);
@@ -67,12 +63,9 @@ export function useFeatureEvidence(featureId?: string) {
     try {
       // Use a raw query to get feature_evidence data since TypeScript isn't recognizing the table
       const { data, error } = await supabase
-        .rpc('get_feature_evidence', { p_feature_id: featureId }) // Using RPC function approach
-        .catch((err) => {
-          console.log('RPC function not available, falling back to direct query');
-          // Fallback to direct query if RPC function doesn't exist
-          return supabase.from('feature_evidence').select('*').eq('feature_id', featureId);
-        });
+        .from('feature_evidence')
+        .select('*')
+        .eq('feature_id', featureId);
       
       if (error) {
         console.error('Error fetching feature evidence:', error);
