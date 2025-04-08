@@ -11,7 +11,6 @@ import {
 import { 
   Table, 
   TableBody, 
-  TableCaption, 
   TableCell, 
   TableHead, 
   TableHeader, 
@@ -25,7 +24,6 @@ import {
   Building, 
   FileText, 
   MessageSquare,
-  BarChart3,
   HeartHandshake,
   Megaphone
 } from 'lucide-react';
@@ -34,79 +32,69 @@ import {
 const successStories = [
   {
     id: 1,
-    title: "SMB Dashboard Integration Success",
-    segment: "SMB",
-    customerName: "TechFlow Solutions",
-    customerCompany: "TechFlow Inc.",
+    title: "Interactive Dashboard for NPS Feedback Analysis",
+    segment: "Enterprise",
+    customerName: "Ana Martinez",
+    customerCompany: "DataVision Analytics",
     customerFeedbackId: "fb-12345-abcde",
-    customerContact: "sarah.johnson@techflow.example",
+    customerContact: "ana.martinez@datavision.example",
     csAgent: {
       name: "Michael Rodriguez",
       email: "m.rodriguez@ourcompany.example",
       lastContact: "2023-11-15"
     },
-    challenge: "TechFlow needed a simpler way to track project metrics across their small team without expensive enterprise tools.",
-    solution: "Custom dashboard integration with role-based access tailored for small teams.",
-    feedback: "The new dashboard has saved us at least 5 hours per week in reporting time and helped us identify project bottlenecks we didn't even know existed!",
-    metrics: [
-      "68% reduction in reporting time",
-      "22% increase in on-time project delivery",
-      "100% team adoption within 2 weeks"
-    ],
-    marketingValue: "Perfect case study for SMB segment showing immediate ROI without enterprise-level complexity. Can highlight cost savings and quick team adoption.",
+    challenge: "DataVision was struggling to extract meaningful insights from thousands of customer feedback responses they collected monthly. Their team spent 15+ hours each week manually categorizing feedback.",
+    solution: "Implementation of our automated feedback tagging and sentiment analysis with custom visualization dashboards for their specific industry metrics.",
+    feedback: "The insights dashboard has completely transformed our customer experience strategy. We can now detect emerging issues before they become widespread, and our product team has a direct line into customer needs. This has been game-changing for our roadmap planning.",
+    marketingValue: "Perfect case study for enterprise customers in analytics space showing how qualitative feedback can be transformed into actionable intelligence at scale. Emphasize time savings and decision-making improvements.",
     potentialCustomers: [
       {
         id: "cust-78901",
-        name: "Bright Media Group",
-        segments: ["SMB", "Creative Agency"],
-        employeeCount: "32",
-        companyARR: "$450K"
+        name: "MetricsMind Inc.",
+        segments: ["Enterprise", "Analytics"],
+        employeeCount: "210",
+        companyARR: "$2.8M"
       },
       {
         id: "cust-45678",
-        name: "InnovateTech Solutions",
-        segments: ["SMB", "Tech Consulting"],
-        employeeCount: "27",
-        companyARR: "$380K"
+        name: "InsightFlow Technologies",
+        segments: ["Mid-Market", "Customer Experience"],
+        employeeCount: "85",
+        companyARR: "$950K"
       }
     ]
   },
   {
     id: 2,
-    title: "Automated Workflow Success for Accountants",
-    segment: "Professional Services",
-    customerName: "Financial Clarity Partners",
-    customerCompany: "Financial Clarity LLC",
+    title: "Voice of Customer Integration Success",
+    segment: "Mid-Market",
+    customerName: "David Chen",
+    customerCompany: "TechReach Solutions",
     customerFeedbackId: "fb-67890-fghij",
-    customerContact: "david.chen@financialclarity.example",
+    customerContact: "david.chen@techreach.example",
     csAgent: {
       name: "Jessica Williams",
       email: "j.williams@ourcompany.example",
       lastContact: "2023-12-03"
     },
-    challenge: "Managing complex client workflows during tax season created bottlenecks and increased error risk.",
-    solution: "Implementation of automated approval workflows and status tracking.",
-    feedback: "The workflow automation has been transformative for our busy season operations. We've cut review cycles by half and dramatically reduced follow-up emails.",
-    metrics: [
-      "53% reduction in approval cycle time",
-      "87% decrease in status update meetings",
-      "35% increase in client capacity"
-    ],
-    marketingValue: "Demonstrates direct impact on service business capacity and efficiency. Would resonate with time-constrained professional service firms.",
+    challenge: "TechReach was collecting customer feedback across multiple channels (support, sales calls, NPS surveys) but had no way to consolidate this data to identify patterns or prioritize product improvements.",
+    solution: "Implementation of our omnichannel feedback collection API with the theme detection engine to automatically categorize and prioritize customer insights.",
+    feedback: "We've reduced our time-to-insight by 73% and have finally broken down the silos between our customer success, product, and marketing teams. For the first time, we have a unified view of what our customers are really saying.",
+    marketingValue: "Highlights how mid-market companies can achieve enterprise-level customer intelligence without massive teams. Focus on the cross-department collaboration improvements and faster time-to-insight.",
     potentialCustomers: [
       {
         id: "cust-23456",
-        name: "PrecisionAccounts Group",
-        segments: ["Professional Services", "Accounting"],
-        employeeCount: "41",
-        companyARR: "$520K"
+        name: "CloudComm Group",
+        segments: ["Mid-Market", "SaaS"],
+        employeeCount: "67",
+        companyARR: "$720K"
       },
       {
         id: "cust-89012",
-        name: "ClearView Financial Advisors",
-        segments: ["Professional Services", "Financial Services"],
-        employeeCount: "19",
-        companyARR: "$310K"
+        name: "Nexus CX Platform",
+        segments: ["Mid-Market", "Customer Experience"],
+        employeeCount: "42",
+        companyARR: "$550K"
       }
     ]
   }
@@ -118,7 +106,7 @@ const SuccessStories = () => {
       <div>
         <h1 className="text-3xl font-bold">Success Stories</h1>
         <p className="text-muted-foreground mt-2">
-          Real-world examples of how our solutions have driven measurable impact
+          Real-world examples of how our feedback analytics platform has driven measurable impact
         </p>
       </div>
 
@@ -214,16 +202,6 @@ const SuccessStories = () => {
                   <blockquote className="mt-1 pl-4 border-l-4 border-blue-200 italic">
                     "{story.feedback}"
                   </blockquote>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                    <BarChart3 className="h-4 w-4" /> Key Metrics
-                  </h4>
-                  <ul className="mt-2 pl-5 list-disc">
-                    {story.metrics.map((metric, idx) => (
-                      <li key={idx} className="text-sm mt-1">{metric}</li>
-                    ))}
-                  </ul>
                 </div>
               </div>
             </div>

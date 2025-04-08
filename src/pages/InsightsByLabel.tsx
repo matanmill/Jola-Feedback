@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,12 @@ import { useInsightsData } from '@/hooks/use-insights-data';
 const InsightsByLabel = () => {
   const { labelId } = useParams();
   const { data: insights, isLoading, error } = useInsightsData(labelId);
+
+  useEffect(() => {
+    // Debug logging
+    console.log(`InsightsByLabel component rendering with labelId: ${labelId}`);
+    console.log('Current insights data:', insights);
+  }, [labelId, insights]);
 
   if (isLoading) {
     return (
@@ -36,7 +42,7 @@ const InsightsByLabel = () => {
         </p>
       </div>
 
-      {insights?.length === 0 ? (
+      {!insights || insights.length === 0 ? (
         <div className="p-6 border rounded-md bg-muted/30">
           <h3 className="text-xl font-medium">No insights found</h3>
           <p className="text-muted-foreground mt-2">
@@ -45,7 +51,7 @@ const InsightsByLabel = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {insights?.map((insight) => (
+          {insights.map((insight) => (
             <Card key={insight.insight_key} className="overflow-hidden hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xl flex items-center gap-2">

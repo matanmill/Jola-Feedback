@@ -125,10 +125,10 @@ const FeatureDiscovery = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Source</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Company</TableHead>
-                            <TableHead>Content</TableHead>
+                            <TableHead className="w-[15%]">Source</TableHead>
+                            <TableHead className="w-[20%]">Role</TableHead>
+                            <TableHead className="w-[20%]">Company</TableHead>
+                            <TableHead className="w-[45%]">Content</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -156,8 +156,8 @@ const FeatureDiscovery = () => {
                                   </div>
                                 )}
                               </TableCell>
-                              <TableCell className="max-w-md">
-                                <div className="truncate">{item.content || 'No content'}</div>
+                              <TableCell className="whitespace-normal break-words">
+                                <div className="max-w-prose">{item.content || 'No content'}</div>
                               </TableCell>
                             </TableRow>
                           ))}

@@ -40,7 +40,7 @@ export interface InsightWithLabels {
 export function useInsightsData(labelFilter?: string) {
   const fetchInsights = async (): Promise<InsightWithLabelDetails[]> => {
     try {
-      console.log('Fetching insights with labels data from Supabase...');
+      console.log(`Fetching insights${labelFilter ? ` with label filter: ${labelFilter}` : ' without label filter'}`);
       
       // Use the get_insights_with_labels function
       const { data: insightsWithLabelsData, error: insightsWithLabelsError } = await supabase
@@ -51,7 +51,7 @@ export function useInsightsData(labelFilter?: string) {
         throw new Error(insightsWithLabelsError.message);
       }
       
-      console.log('Insights with labels data:', insightsWithLabelsData);
+      console.log('Raw insights with labels data:', insightsWithLabelsData);
       
       // Group by insight_key to create the right structure
       const insightMap = new Map<string, InsightWithLabelDetails>();
@@ -83,14 +83,23 @@ export function useInsightsData(labelFilter?: string) {
       const insights = Array.from(insightMap.values());
       
       // Apply label filter if provided
+      let filteredInsights = insights;
       if (labelFilter) {
-        return insights.filter(insight => 
+        console.log(`Filtering insights for label: ${labelFilter}`);
+        filteredInsights = insights.filter(insight => 
           insight.label_details.some(label => label.label === labelFilter)
         );
+        console.log(`Found ${filteredInsights.length} insights matching label: ${labelFilter}`);
+        
+        // Log the filtered insights for debugging
+        filteredInsights.forEach(insight => {
+          console.log(`Matching insight: ${insight.insight_key}, Title: ${insight.Title}`);
+          console.log(`Labels:`, insight.labels);
+        });
       }
       
-      console.log(`Successfully fetched ${insights.length} insights with their labels`);
-      return insights;
+      console.log(`Successfully fetched ${filteredInsights.length} insights with their labels`);
+      return filteredInsights;
     } catch (error) {
       console.error('Error in useInsightsData:', error);
       throw error;
