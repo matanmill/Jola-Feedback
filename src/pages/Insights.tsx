@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useInsightsData, useInsightFeedbacksData, InsightWithLabelDetails } from '@/hooks/use-insights-data';
 import { 
@@ -19,6 +18,56 @@ import {
   DialogDescription 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+
+const MAX_CONTENT_LENGTH = 150; // Maximum characters to show before truncating
+
+const InsightCard = ({ insight, onClick }: { insight: InsightWithLabelDetails, onClick: () => void }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const shouldTruncate = insight.content && insight.content.length > MAX_CONTENT_LENGTH;
+  const displayContent = shouldTruncate && !isExpanded 
+    ? `${insight.content.substring(0, MAX_CONTENT_LENGTH)}...`
+    : insight.content;
+
+  return (
+    <Card 
+      className="border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onClick}
+    >
+      <CardHeader className="flex flex-row items-center gap-2 pb-2">
+        <Lightbulb className="h-5 w-5 text-amber-500" />
+        <CardTitle className="text-lg">
+          {insight.Title || 'Untitled Insight'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-700">
+          {displayContent || 'No content available for this insight.'}
+        </p>
+        {shouldTruncate && (
+          <Button
+            variant="link"
+            className="p-0 h-auto text-blue-600 hover:text-blue-800"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
+          >
+            {isExpanded ? 'See Less' : 'See More'}
+          </Button>
+        )}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="flex flex-wrap gap-1 mb-2">
+            {insight.label_details && insight.label_details.map(label => (
+              <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
+                {label.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const Insights = () => {
   const { toast } = useToast();
@@ -137,32 +186,11 @@ const Insights = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {insights.map(insight => (
-            <Card 
-              key={insight.insight_key} 
-              className="border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            <InsightCard
+              key={insight.insight_key}
+              insight={insight}
               onClick={() => handleInsightClick(insight)}
-            >
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Lightbulb className="h-5 w-5 text-amber-500" />
-                <CardTitle className="text-lg">
-                  {insight.Title || 'Untitled Insight'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700">
-                  {insight.content || 'No content available for this insight.'}
-                </p>
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {insight.label_details && insight.label_details.map(label => (
-                      <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
-                        {label.label}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            />
           ))}
         </div>
       )}
