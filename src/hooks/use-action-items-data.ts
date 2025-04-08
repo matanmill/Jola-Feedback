@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -5,7 +6,7 @@ import type { Database } from '@/integrations/supabase/types';
 type ActionItemInsightResult = Database['public']['Functions']['get_action_items_with_insights']['Returns'][number];
 
 export interface ActionItem {
-  id: string;
+  actionitem_key: string;
   content: string;
   created_at: string;
   related_insights?: string[];
@@ -41,7 +42,7 @@ export function useActionItemsData() {
       data.forEach(row => {
         if (!actionItemsMap.has(row.actionitem_key)) {
           actionItemsMap.set(row.actionitem_key, {
-            id: row.actionitem_key,
+            actionitem_key: row.actionitem_key,
             content: row.actionitem_content || '',
             created_at: new Date().toISOString(), // Use current date as fallback
             related_insights: [],

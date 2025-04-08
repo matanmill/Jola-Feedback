@@ -56,27 +56,29 @@ export function useInsightsData(labelFilter?: string) {
       // Group by insight_key to create the right structure
       const insightMap = new Map<string, InsightWithLabelDetails>();
       
-      insightsWithLabelsData.forEach((item: InsightWithLabels) => {
-        if (!insightMap.has(item.insight_key)) {
-          insightMap.set(item.insight_key, {
-            insight_key: item.insight_key,
-            content: item.content,
-            Title: item.title,
-            labels: [],
-            label_details: []
-          });
-        }
-        
-        const insight = insightMap.get(item.insight_key)!;
-        if (item.label) {
-          insight.labels = insight.labels || [];
-          insight.labels.push(item.label);
-          insight.label_details.push({
-            label_key: item.label_key,
-            label: item.label
-          });
-        }
-      });
+      if (Array.isArray(insightsWithLabelsData)) {
+        insightsWithLabelsData.forEach((item: InsightWithLabels) => {
+          if (!insightMap.has(item.insight_key)) {
+            insightMap.set(item.insight_key, {
+              insight_key: item.insight_key,
+              content: item.content,
+              Title: item.title,
+              labels: [],
+              label_details: []
+            });
+          }
+          
+          const insight = insightMap.get(item.insight_key)!;
+          if (item.label) {
+            insight.labels = insight.labels || [];
+            insight.labels.push(item.label);
+            insight.label_details.push({
+              label_key: item.label_key,
+              label: item.label
+            });
+          }
+        });
+      }
       
       const insights = Array.from(insightMap.values());
       
@@ -118,8 +120,15 @@ export function useInsightFeedbacksData(insightKey?: string) {
         throw new Error(error.message);
       }
       
-      // Filter to only get feedbacks for the specific insight
-      const relatedFeedbacks = data.filter((item: InsightWithFeedback) => 
+      // Ensure proper type handling and conversion of data
+      if (!Array.isArray(data)) {
+        console.log('No feedback data returned or invalid format');
+        return [];
+      }
+      
+      // Cast returned data to the correct type and filter for the specific insight
+      const typedData = data as InsightWithFeedback[];
+      const relatedFeedbacks = typedData.filter(item => 
         item.insight_key === insightKey
       );
       
