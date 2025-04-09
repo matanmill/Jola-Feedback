@@ -34,6 +34,7 @@ const InsightCard = ({ insight, onClick }: { insight: InsightWithLabelDetails, o
 
   const handleShareClick = (e: React.MouseEvent) => {
     setIsShareClicked(true);
+    e.stopPropagation();
     // The actual onClick handler is in the ShareMenu component
   };
 
@@ -58,7 +59,7 @@ const InsightCard = ({ insight, onClick }: { insight: InsightWithLabelDetails, o
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex-grow">
+      <CardContent className="flex-grow pb-2">
         <p className="text-gray-700">
           {displayContent || 'No content available for this insight.'}
         </p>
@@ -84,11 +85,13 @@ const InsightCard = ({ insight, onClick }: { insight: InsightWithLabelDetails, o
           </div>
         </div>
       </CardContent>
-      <CardFooter className="pt-0 flex justify-end border-t">
+      <CardFooter className="pt-2 flex justify-end border-t mt-auto">
         <ShareMenu 
           title={insight.Title || 'Insight'}
           contentPreview={insight.content || ''}
           onClick={handleShareClick}
+          variant="gradient"
+          size="sm"
         />
       </CardFooter>
     </Card>

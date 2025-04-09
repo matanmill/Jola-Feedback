@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
@@ -217,7 +218,9 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
                         iconOnly
                         title={`Feedback from ${feedback.name || 'Anonymous'}`}
                         contentPreview={feedback.content || ''}
-                        className="ml-2"
+                        className="ml-4" 
+                        variant="gradient"
+                        size="lg"
                       />
                     </div>
                   </div>

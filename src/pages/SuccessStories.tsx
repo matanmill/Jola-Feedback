@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Card, 
@@ -131,7 +132,9 @@ const SuccessStories = () => {
                 title={story.title}
                 contentPreview={`${story.challenge}\n\n${story.solution}\n\n${story.feedback}`}
                 allowEmail={true}
-                iconOnly
+                variant="gradient"
+                size="lg"
+                className="p-1 translate-y-1" 
               />
               <TrendingUp className="h-12 w-12 text-green-500 opacity-75" />
             </div>

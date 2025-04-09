@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Share2, Slack, Mail } from 'lucide-react';
+import { Share2, Slack, Mail, FileEdit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,7 @@ interface ShareMenuProps {
   iconOnly?: boolean;
   onClick?: (e: React.MouseEvent) => void;
   size?: "default" | "sm" | "lg";
+  variant?: "default" | "gradient" | "outline";
 }
 
 export function ShareMenu({ 
@@ -44,7 +46,8 @@ export function ShareMenu({
   className = '',
   iconOnly = false,
   onClick,
-  size = "default"
+  size = "default",
+  variant = "default"
 }: ShareMenuProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<ShareOption | null>(null);
@@ -53,7 +56,7 @@ export function ShareMenu({
 
   const shareOptions: ShareOption[] = [
     { id: 'slack', label: 'Share to Slack', icon: Slack, color: '#4A154B' },
-    { id: 'jira', label: 'Share to Jira', icon: Share2, color: '#0052CC' },
+    { id: 'jira', label: 'Share to Jira', icon: FileEdit, color: '#0052CC' },
   ];
 
   if (allowEmail) {
@@ -74,6 +77,18 @@ export function ShareMenu({
     setShareOpen(false);
   };
 
+  // Define different button styles based on the variant
+  const getButtonStyle = () => {
+    switch (variant) {
+      case 'gradient':
+        return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 transition-all shadow-md hover:shadow-lg';
+      case 'outline':
+        return 'bg-transparent border-2 border-blue-400 text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all';
+      default:
+        return 'bg-blue-500 hover:bg-blue-600 text-white transition-all shadow-sm hover:shadow-md';
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -81,7 +96,7 @@ export function ShareMenu({
           <Button 
             variant="outline"
             size={iconOnly ? "icon" : size} 
-            className={`${className} hover:bg-slate-100 hover:border-slate-300 transition-all`}
+            className={`${className} ${getButtonStyle()} rounded-full`}
             onClick={(e) => {
               if (onClick) {
                 onClick(e);
@@ -89,7 +104,7 @@ export function ShareMenu({
               }
             }}
           >
-            <Share2 className={iconOnly ? "h-4 w-4" : "h-5 w-5"} />
+            <Share2 className={iconOnly ? "h-4 w-4" : "h-5 w-5 mr-1"} />
             {!iconOnly && <span>Share</span>}
           </Button>
         </DropdownMenuTrigger>
@@ -111,8 +126,8 @@ export function ShareMenu({
       </DropdownMenu>
 
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md bg-gradient-to-b from-white to-slate-50">
+          <DialogHeader className="border-b pb-4">
             <DialogTitle className="flex items-center gap-2">
               {selectedOption && (
                 <selectedOption.icon 
@@ -134,23 +149,25 @@ export function ShareMenu({
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={3}
                 placeholder="Add your message here..."
-                className="w-full"
+                className="w-full border-blue-200 focus:border-blue-400 transition-all"
               />
             </div>
-            <Separator />
+            <Separator className="my-4" />
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Content being shared:</p>
-              <div className="bg-slate-50 p-3 rounded-md border text-sm">
-                <p className="font-medium">{title}</p>
+              <div className="bg-slate-50 p-3 rounded-md border border-slate-200 shadow-inner text-sm">
+                <p className="font-medium text-blue-600">{title}</p>
                 <p className="text-muted-foreground mt-2 whitespace-pre-wrap">{contentPreview}</p>
               </div>
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setShareOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleShare} className="bg-blue-600 hover:bg-blue-700">
+          <DialogFooter className="gap-2 sm:gap-0 border-t pt-4">
+            <DialogClose asChild>
+              <Button variant="outline" className="border-slate-300">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button onClick={handleShare} className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white">
               Share Now
             </Button>
           </DialogFooter>
