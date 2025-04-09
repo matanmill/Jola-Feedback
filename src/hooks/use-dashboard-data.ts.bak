@@ -1,0 +1,183 @@
+// ORIGINAL IMPLEMENTATION WITH REAL SUPABASE FUNCTIONS
+// Use this as a reference when implementing the actual RPC functions
+
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+export function useDashboardData() {
+  // Fetch the dashboard data
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['dashboardData'],
+    queryFn: async (): Promise<DashboardData> => {
+      try {
+        console.log('Fetching dashboard data...');
+        
+        // Call Supabase RPC function for time series data
+        const { data: timeSeriesData, error: timeSeriesError } = await supabase
+          .rpc('get_feedback_time_series');
+          
+        if (timeSeriesError) {
+          console.error('Error fetching time series data:', timeSeriesError);
+          throw new Error(timeSeriesError.message);
+        }
+        
+        // Call Supabase RPC function for positive feedback examples
+        const { data: positiveFeedbacks, error: positiveError } = await supabase
+          .rpc('get_positive_feedback_examples', { limit_count: 5 });
+          
+        if (positiveError) {
+          console.error('Error fetching positive feedback examples:', positiveError);
+          throw new Error(positiveError.message);
+        }
+        
+        // Call Supabase RPC function for negative feedback examples
+        const { data: negativeFeedbacks, error: negativeError } = await supabase
+          .rpc('get_negative_feedback_examples', { limit_count: 5 });
+          
+        if (negativeError) {
+          console.error('Error fetching negative feedback examples:', negativeError);
+          throw new Error(negativeError.message);
+        }
+        
+        return {
+          timeSeriesData: timeSeriesData || [],
+          positiveFeedbacks: positiveFeedbacks || [],
+          negativeFeedbacks: negativeFeedbacks || []
+        };
+      } catch (error) {
+        console.error('Error in useDashboardData:', error);
+        throw error;
+      }
+    }
+  });
+  
+  // Fetch dashboard counts (total feedback, insights, etc.)
+  const { data: counts, isLoading: isCountsLoading } = useQuery({
+    queryKey: ['dashboardCounts'],
+    queryFn: async (): Promise<DashboardCounts> => {
+      const { data: countsData, error: countsError } = await supabase
+        .rpc('get_dashboard_counts');
+        
+      if (countsError) {
+        console.error('Error fetching dashboard counts:', countsError);
+        throw new Error(countsError.message);
+      }
+      
+      return countsData || {
+        feedback: 0,
+        insights: 0,
+        actionItems: 0,
+        sentimentScore: 0,
+        newFeedback: 0,
+        newInsights: 0,
+        newActionItems: 0,
+        sentimentTrend: 0
+      };
+    }
+  });
+  
+  // Fetch metadata distribution
+  const { data: metadataDistribution, isLoading: isMetadataLoading } = useQuery({
+    queryKey: ['metadataDistribution'],
+    queryFn: async (): Promise<MetadataDistribution> => {
+      try {
+        // Call Supabase RPC function for role distribution
+        const { data: rolesData, error: rolesError } = await supabase
+          .rpc('get_role_distribution');
+          
+        if (rolesError) {
+          console.error('Error fetching role distribution:', rolesError);
+          throw new Error(rolesError.message);
+        }
+        
+        // Call Supabase RPC function for ARR distribution
+        const { data: arrData, error: arrError } = await supabase
+          .rpc('get_arr_distribution');
+          
+        if (arrError) {
+          console.error('Error fetching ARR distribution:', arrError);
+          throw new Error(arrError.message);
+        }
+        
+        // Call Supabase RPC function for employee count distribution
+        const { data: employeeData, error: employeeError } = await supabase
+          .rpc('get_employee_count_distribution');
+          
+        if (employeeError) {
+          console.error('Error fetching employee count distribution:', employeeError);
+          throw new Error(employeeError.message);
+        }
+        
+        return {
+          roles: rolesData || [],
+          arr: arrData || [],
+          employeeCount: employeeData || []
+        };
+      } catch (error) {
+        console.error('Error in fetching metadata distribution:', error);
+        throw error;
+      }
+    }
+  });
+  
+  // Fetch sources distribution
+  const { data: sourcesDistribution, isLoading: isSourcesLoading } = useQuery({
+    queryKey: ['sourcesDistribution'],
+    queryFn: async (): Promise<MetadataDistributionItem[]> => {
+      const { data: sourcesData, error: sourcesError } = await supabase
+        .rpc('get_sources_distribution');
+        
+      if (sourcesError) {
+        console.error('Error fetching sources distribution:', sourcesError);
+        throw new Error(sourcesError.message);
+      }
+      
+      return sourcesData || [];
+    }
+  });
+  
+  // Fetch sentiment distribution
+  const { data: sentimentDistribution, isLoading: isSentimentLoading } = useQuery({
+    queryKey: ['sentimentDistribution'],
+    queryFn: async (): Promise<MetadataDistributionItem[]> => {
+      const { data: sentimentData, error: sentimentError } = await supabase
+        .rpc('get_sentiment_distribution');
+        
+      if (sentimentError) {
+        console.error('Error fetching sentiment distribution:', sentimentError);
+        throw new Error(sentimentError.message);
+      }
+      
+      return sentimentData || [];
+    }
+  });
+  
+  // Export to Slack function
+  const exportToSlack = async () => {
+    try {
+      const { data, error } = await supabase
+        .rpc('export_dashboard_to_slack');
+        
+      if (error) {
+        console.error('Error exporting to Slack:', error);
+        throw new Error(error.message);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error in exportToSlack:', error);
+      throw error;
+    }
+  };
+  
+  return {
+    data,
+    counts,
+    metadataDistribution,
+    sourcesDistribution,
+    sentimentDistribution,
+    isLoading: isLoading || isCountsLoading || isMetadataLoading || isSourcesLoading || isSentimentLoading,
+    error,
+    exportToSlack
+  };
+} 

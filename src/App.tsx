@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,7 @@ import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import SidebarLayout from "./components/app/SidebarLayout";
+import Dashboard from '@/pages/Dashboard';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -44,6 +44,7 @@ const App = () => (
             <Route path="action-items" element={<ActionItems />} />
             <Route path="chat" element={<Chat />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="dashboard" element={<Dashboard />} />
           </Route>
           
           {/* Catch-all route */}
