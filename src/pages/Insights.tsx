@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 import { useInsightsData, useInsightFeedbacksData, InsightWithLabelDetails } from '@/hooks/use-insights-data';
 import { 
   Card, 
   CardHeader,
   CardTitle, 
-  CardContent 
+  CardContent,
+  CardFooter 
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -28,28 +30,35 @@ const InsightCard = ({ insight, onClick }: { insight: InsightWithLabelDetails, o
   const displayContent = shouldTruncate && !isExpanded 
     ? `${insight.content.substring(0, MAX_CONTENT_LENGTH)}...`
     : insight.content;
+  const [isShareClicked, setIsShareClicked] = useState(false);
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    setIsShareClicked(true);
+    // The actual onClick handler is in the ShareMenu component
+  };
+
+  const handleCardClick = () => {
+    if (!isShareClicked) {
+      onClick();
+    }
+    // Reset share clicked state for next interaction
+    setIsShareClicked(false);
+  };
 
   return (
     <Card 
-      className="border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-      onClick={onClick}
+      className="border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+      onClick={handleCardClick}
     >
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-amber-500" />
           <CardTitle className="text-lg">
             {insight.Title || 'Untitled Insight'}
           </CardTitle>
         </div>
-        <ShareMenu 
-          iconOnly
-          title={insight.Title || 'Insight'}
-          contentPreview={insight.content || ''}
-          className="ml-auto"
-          onClick={(e: React.MouseEvent) => e.stopPropagation()}
-        />
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <p className="text-gray-700">
           {displayContent || 'No content available for this insight.'}
         </p>
@@ -65,7 +74,7 @@ const InsightCard = ({ insight, onClick }: { insight: InsightWithLabelDetails, o
             {isExpanded ? 'See Less' : 'See More'}
           </Button>
         )}
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 pt-2 border-t border-gray-100">
           <div className="flex flex-wrap gap-1 mb-2">
             {insight.label_details && insight.label_details.map(label => (
               <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
@@ -75,6 +84,13 @@ const InsightCard = ({ insight, onClick }: { insight: InsightWithLabelDetails, o
           </div>
         </div>
       </CardContent>
+      <CardFooter className="pt-0 flex justify-end border-t">
+        <ShareMenu 
+          title={insight.Title || 'Insight'}
+          contentPreview={insight.content || ''}
+          onClick={handleShareClick}
+        />
+      </CardFooter>
     </Card>
   );
 };

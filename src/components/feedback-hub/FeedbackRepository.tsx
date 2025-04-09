@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
@@ -30,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ShareMenu } from '@/components/share/ShareMenu';
 
 interface FeedbackRepositoryProps {
   isDebugMode: boolean;
@@ -47,16 +47,13 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
     refetch 
   } = useFeedbackData();
 
-  // Get unique roles for the filter dropdown
   const uniqueRoles = [...new Set(feedbacks.map(fb => fb.role).filter(Boolean))];
 
-  // Filter feedbacks based on selected filter
   const filteredFeedbacks = feedbacks.filter(feedback => {
     const roleMatch = !roleFilter || feedback.role === roleFilter;
     return roleMatch;
   });
 
-  // Handle errors
   useEffect(() => {
     if (error) {
       toast({
@@ -75,7 +72,6 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
     }
   };
 
-  // Function to truncate text
   const truncateText = (text: string, maxLength: number) => {
     if (!text) return '';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
@@ -83,7 +79,6 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
 
   return (
     <div className="space-y-6">
-      {/* Debug Panel */}
       {isDebugMode && (
         <DebugPanel 
           data={{ 
@@ -98,7 +93,6 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
         />
       )}
 
-      {/* Filters */}
       <div className="flex items-center space-x-4 mb-4 bg-slate-50 p-4 rounded-lg shadow-sm border">
         <div className="flex items-center">
           <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -119,7 +113,6 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
         </Select>
       </div>
 
-      {/* Feedback List */}
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -133,7 +126,6 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
         </div>
       ) : (
         <div className="border rounded-md overflow-hidden shadow-sm">
-          {/* Header row */}
           <div className="grid grid-cols-6 bg-slate-100 px-4 py-3 font-medium text-sm">
             <div>Name</div>
             <div>Company</div>
@@ -143,7 +135,6 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
             <div>Content</div>
           </div>
           
-          {/* Scrollable list */}
           <div className="max-h-[70vh] overflow-y-auto bg-white">
             {filteredFeedbacks.map((feedback) => (
               <Collapsible 
@@ -193,31 +184,41 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="p-4 bg-slate-50 space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Role</h3>
-                      {feedback.role ? (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                          {feedback.role}
-                        </Badge>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Not specified</span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Source</h3>
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4 text-slate-400" />
-                        <span className="text-sm">{feedback.source || 'Unknown source'}</span>
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-4 flex-1">
+                        <div>
+                          <h3 className="text-sm font-medium text-muted-foreground mb-1">Role</h3>
+                          {feedback.role ? (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                              {feedback.role}
+                            </Badge>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Not specified</span>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-muted-foreground mb-1">Source</h3>
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4 text-slate-400" />
+                            <span className="text-sm">{feedback.source || 'Unknown source'}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-muted-foreground mb-1">Full Content</h3>
+                          <p className="text-sm whitespace-pre-wrap p-3 bg-white border rounded-md">
+                            {feedback.content || 'No content available'}
+                          </p>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Created: {new Date(feedback.created_at).toLocaleDateString()} {new Date(feedback.created_at).toLocaleTimeString()}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Full Content</h3>
-                      <p className="text-sm whitespace-pre-wrap p-3 bg-white border rounded-md">
-                        {feedback.content || 'No content available'}
-                      </p>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Created: {new Date(feedback.created_at).toLocaleDateString()} {new Date(feedback.created_at).toLocaleTimeString()}
+                      <ShareMenu
+                        iconOnly
+                        title={`Feedback from ${feedback.name || 'Anonymous'}`}
+                        contentPreview={feedback.content || ''}
+                        className="ml-2"
+                      />
                     </div>
                   </div>
                 </CollapsibleContent>

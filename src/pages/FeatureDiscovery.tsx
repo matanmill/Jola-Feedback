@@ -94,12 +94,11 @@ const FeatureDiscovery = () => {
                     Created: {formatDate(feature.created_at)}
                   </p>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
                   <ShareMenu 
-                    iconOnly
                     title={feature.title || 'Feature Request'}
                     contentPreview={feature.description || ''}
-                    className="mr-2"
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
