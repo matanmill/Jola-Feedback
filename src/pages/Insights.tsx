@@ -18,6 +18,7 @@ import {
   DialogDescription 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ShareMenu } from '@/components/share/ShareMenu';
 
 const MAX_CONTENT_LENGTH = 150; // Maximum characters to show before truncating
 
@@ -33,11 +34,20 @@ const InsightCard = ({ insight, onClick }: { insight: InsightWithLabelDetails, o
       className="border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
       onClick={onClick}
     >
-      <CardHeader className="flex flex-row items-center gap-2 pb-2">
-        <Lightbulb className="h-5 w-5 text-amber-500" />
-        <CardTitle className="text-lg">
-          {insight.Title || 'Untitled Insight'}
-        </CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div className="flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-amber-500" />
+          <CardTitle className="text-lg">
+            {insight.Title || 'Untitled Insight'}
+          </CardTitle>
+        </div>
+        <ShareMenu 
+          iconOnly
+          title={insight.Title || 'Insight'}
+          contentPreview={insight.content || ''}
+          className="ml-auto"
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        />
       </CardHeader>
       <CardContent>
         <p className="text-gray-700">
@@ -77,18 +87,15 @@ const Insights = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // Fetch related feedbacks when an insight is selected
   const { data: relatedFeedbacks = [], isLoading: isLoadingFeedbacks } = useInsightFeedbacksData(
     selectedInsight?.insight_key
   );
 
-  // Handle click on an insight
   const handleInsightClick = (insight: InsightWithLabelDetails) => {
     setSelectedInsight(insight);
     setIsDialogOpen(true);
   };
 
-  // Handle generate insights
   const handleGenerateInsights = async () => {
     setIsGenerating(true);
     try {
@@ -109,7 +116,6 @@ const Insights = () => {
         description: "Insights generation started successfully",
       });
 
-      // Refetch insights after a short delay to get new data
       setTimeout(() => {
         refetch();
       }, 5000);
@@ -125,7 +131,6 @@ const Insights = () => {
     }
   };
 
-  // Show error toast if data fetching fails
   React.useEffect(() => {
     if (error) {
       toast({
@@ -136,7 +141,6 @@ const Insights = () => {
     }
   }, [error, toast]);
 
-  // Format date for display
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Unknown date';
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -195,7 +199,6 @@ const Insights = () => {
         </div>
       )}
 
-      {/* Insight Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -232,7 +235,6 @@ const Insights = () => {
                 </div>
               </div>
               
-              {/* Related Feedbacks Table */}
               <div>
                 <h3 className="text-base font-medium mb-2">Related Feedbacks</h3>
                 {isLoadingFeedbacks ? (

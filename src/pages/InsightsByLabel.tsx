@@ -6,6 +6,7 @@ import { Loader2, Lightbulb } from 'lucide-react';
 import { useInsightsData, InsightWithLabelDetails } from '@/hooks/use-insights-data';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { ShareMenu } from '@/components/share/ShareMenu';
 
 const MAX_CONTENT_LENGTH = 150; // Maximum characters to show before truncating
 
@@ -18,18 +19,25 @@ const InsightCard = ({ insight }: { insight: InsightWithLabelDetails }) => {
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-xl flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-amber-500" />
-          {insight.Title || 'Untitled Insight'}
-        </CardTitle>
-        <CardDescription className="flex flex-wrap gap-1 mt-2">
-          {insight.label_details.map(label => (
-            <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
-              {label.label}
-            </Badge>
-          ))}
-        </CardDescription>
+      <CardHeader className="pb-3 flex flex-row justify-between">
+        <div>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-amber-500" />
+            {insight.Title || 'Untitled Insight'}
+          </CardTitle>
+          <CardDescription className="flex flex-wrap gap-1 mt-2">
+            {insight.label_details.map(label => (
+              <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
+                {label.label}
+              </Badge>
+            ))}
+          </CardDescription>
+        </div>
+        <ShareMenu 
+          iconOnly
+          title={insight.Title || 'Insight'}
+          contentPreview={insight.content || ''}
+        />
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground">

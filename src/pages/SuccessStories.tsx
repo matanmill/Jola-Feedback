@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Card, 
@@ -27,6 +26,7 @@ import {
   HeartHandshake,
   Megaphone
 } from 'lucide-react';
+import { ShareMenu } from '@/components/share/ShareMenu';
 
 // Mock data for success stories
 const successStories = [
@@ -113,20 +113,26 @@ const SuccessStories = () => {
       {/* Success Story Cards */}
       {successStories.map(story => (
         <Card key={story.id} className="overflow-hidden bg-white shadow-md">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
-            <div className="flex justify-between items-start">
-              <div>
-                <Badge variant="outline" className="mb-2 bg-blue-100 text-blue-800 border-blue-200">
-                  {story.segment}
-                </Badge>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500" />
-                  {story.title}
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  {story.customerCompany}
-                </CardDescription>
-              </div>
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b flex flex-row justify-between">
+            <div>
+              <Badge variant="outline" className="mb-2 bg-blue-100 text-blue-800 border-blue-200">
+                {story.segment}
+              </Badge>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-500" />
+                {story.title}
+              </CardTitle>
+              <CardDescription className="mt-1">
+                {story.customerCompany}
+              </CardDescription>
+            </div>
+            <div className="flex items-start gap-2">
+              <ShareMenu 
+                title={story.title}
+                contentPreview={`${story.challenge}\n\n${story.solution}\n\n${story.feedback}`}
+                allowEmail={true}
+                iconOnly
+              />
               <TrendingUp className="h-12 w-12 text-green-500 opacity-75" />
             </div>
           </CardHeader>

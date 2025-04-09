@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { 
@@ -18,6 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFeatureRequests, useFeatureEvidence } from '@/hooks/use-feature-data';
+import { ShareMenu } from '@/components/share/ShareMenu';
 
 const FeatureDiscovery = () => {
   const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
@@ -25,7 +25,6 @@ const FeatureDiscovery = () => {
   const { data: evidenceItems, isLoading: evidenceLoading } = useFeatureEvidence(selectedFeatureId || undefined);
   const { toast } = useToast();
   
-  // Track which feature items are open in the collapsible list
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   
   const toggleItem = (featureId: string) => {
@@ -34,7 +33,6 @@ const FeatureDiscovery = () => {
       [featureId]: !prev[featureId]
     }));
     
-    // If we're opening this item, also set it as the selected feature
     if (!openItems[featureId]) {
       setSelectedFeatureId(featureId);
     }
@@ -96,16 +94,24 @@ const FeatureDiscovery = () => {
                     Created: {formatDate(feature.created_at)}
                   </p>
                 </div>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 ml-2">
-                    {openItems[feature.id] ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                    <span className="sr-only">Toggle</span>
-                  </Button>
-                </CollapsibleTrigger>
+                <div className="flex items-center">
+                  <ShareMenu 
+                    iconOnly
+                    title={feature.title || 'Feature Request'}
+                    contentPreview={feature.description || ''}
+                    className="mr-2"
+                  />
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      {openItems[feature.id] ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">Toggle</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
               </div>
               
               <CollapsibleContent>

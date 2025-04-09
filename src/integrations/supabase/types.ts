@@ -296,6 +296,21 @@ export type Database = {
         }
         Relationships: []
       }
+      insights_chunks: {
+        Row: {
+          chunk_key: string
+          insight_key: string
+        }
+        Insert: {
+          chunk_key?: string
+          insight_key?: string
+        }
+        Update: {
+          chunk_key?: string
+          insight_key?: string
+        }
+        Relationships: []
+      }
       insights_feedbacks: {
         Row: {
           feedback_key: string

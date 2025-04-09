@@ -24,6 +24,7 @@ import {
   UserRound,
   BriefcaseBusiness
 } from 'lucide-react';
+import { ShareMenu } from '@/components/share/ShareMenu';
 
 interface FeedbackDetailProps {
   feedback: Feedback;
@@ -32,38 +33,45 @@ interface FeedbackDetailProps {
 export const FeedbackDetail: React.FC<FeedbackDetailProps> = ({ feedback }) => {
   return (
     <>
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2 text-xl">
-          Feedback from {feedback.name || 'Anonymous'}
-        </DialogTitle>
-        <DialogDescription>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {feedback.source && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <MessageSquare className="h-3 w-3" />
-                {feedback.source}
-              </Badge>
-            )}
-            {feedback.created_at && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {formatDate(feedback.created_at)}
-              </Badge>
-            )}
-            {feedback.company && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Building className="h-3 w-3" />
-                {feedback.company}
-              </Badge>
-            )}
-            {feedback.role && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <BriefcaseBusiness className="h-3 w-3" />
-                {feedback.role}
-              </Badge>
-            )}
-          </div>
-        </DialogDescription>
+      <DialogHeader className="flex flex-row justify-between items-start">
+        <div>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            Feedback from {feedback.name || 'Anonymous'}
+          </DialogTitle>
+          <DialogDescription>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {feedback.source && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <MessageSquare className="h-3 w-3" />
+                  {feedback.source}
+                </Badge>
+              )}
+              {feedback.created_at && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {formatDate(feedback.created_at)}
+                </Badge>
+              )}
+              {feedback.company && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Building className="h-3 w-3" />
+                  {feedback.company}
+                </Badge>
+              )}
+              {feedback.role && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <BriefcaseBusiness className="h-3 w-3" />
+                  {feedback.role}
+                </Badge>
+              )}
+            </div>
+          </DialogDescription>
+        </div>
+        <ShareMenu 
+          title={`Feedback from ${feedback.name || 'Anonymous'}`}
+          contentPreview={feedback.content || ''}
+          iconOnly
+        />
       </DialogHeader>
       
       <Separator className="my-4" />
