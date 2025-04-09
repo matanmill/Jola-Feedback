@@ -32,6 +32,7 @@ interface ShareMenuProps {
   allowEmail?: boolean;
   className?: string;
   iconOnly?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export function ShareMenu({ 
@@ -39,7 +40,8 @@ export function ShareMenu({
   contentPreview, 
   allowEmail = false, 
   className = '',
-  iconOnly = false
+  iconOnly = false,
+  onClick
 }: ShareMenuProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<ShareOption | null>(null);
@@ -77,6 +79,12 @@ export function ShareMenu({
             variant="ghost" 
             size={iconOnly ? "icon" : "sm"} 
             className={className}
+            onClick={(e) => {
+              if (onClick) {
+                onClick(e);
+                e.stopPropagation();
+              }
+            }}
           >
             <Share2 className="h-4 w-4" />
             {!iconOnly && <span>Share</span>}
