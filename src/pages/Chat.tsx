@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Send, ChevronRight, Quote } from 'lucide-react';
+import { Loader2, Send, ChevronRight, Quote, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useChatSession } from '@/hooks/use-chat-session';
+import { toast } from 'sonner';
 
 // Sample suggestions for the chat
 const CHAT_SUGGESTIONS = [
@@ -38,14 +40,8 @@ interface ChatRequest {
 }
 
 const Chat = () => {
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([
-    { 
-      role: 'assistant', 
-      content: 'Hello! I\'m your feedback assistant powered by RAG technology. I can help you analyze feedback and provide insights based on historical data. How can I help you today?' 
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const { messages, isLoading, error, sendMessage, endSession } = useChatSession();
   const [showQuotes, setShowQuotes] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -59,52 +55,33 @@ const Chat = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-
-    // Add user message
-    const userMessage = { role: 'user' as const, content: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
+    if (!message.trim()) return;
 
     try {
-      // Call your Python backend with RAG implementation
-      const response = await fetch('https://test-python-backend-1.onrender.com/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_input: input,
-          session_id: "default" // You can make this dynamic if needed
-        })
-      });
+      console.log('Sending message:', message);
+      await sendMessage(message);
+      console.log('Message sent successfully');
+      setMessage('');
+    } catch (err) {
+      console.error('Error in handleSubmit:', err);
+      toast.error('Failed to send message. Please try again.');
+    }
+  };
 
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
-
-      const data = await response.json();
-      setMessages(prev => [
-        ...prev,
-        { role: 'assistant', content: data.response }
-      ]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setMessages(prev => [
-        ...prev, 
-        { 
-          role: 'assistant', 
-          content: 'Sorry, there was an error processing your request. Please try again.' 
-        }
-      ]);
-    } finally {
-      setIsLoading(false);
+  const handleEndSession = async () => {
+    try {
+      console.log('Ending session');
+      await endSession();
+      console.log('Session ended successfully');
+      toast.success('Chat session ended');
+    } catch (err) {
+      console.error('Error in handleEndSession:', err);
+      toast.error('Failed to end session. Please try again.');
     }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    setInput(suggestion);
+    setMessage(suggestion);
     // Optional: Auto-submit the suggestion
     // handleSubmit({ preventDefault: () => {} } as React.FormEvent);
   };
@@ -113,37 +90,43 @@ const Chat = () => {
     <div className="flex h-full">
       <div className="flex-1 flex flex-col space-y-6">
         <Card className="flex-1 flex flex-col shadow-lg border-slate-200">
-          <CardHeader className="border-b bg-white">
+          <CardHeader className="border-b bg-white flex flex-row items-center justify-between">
             <CardTitle className="text-xl text-slate-800 font-semibold">Feedback Assistant</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEndSession}
+              className="text-red-500 hover:text-red-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              End Session
+            </Button>
           </CardHeader>
           
           <CardContent className="flex-1 overflow-y-auto p-4 pb-0">
             <div className="space-y-6">
-              {messages.map((message, index) => (
-                <div 
-                  key={index} 
-                  className={cn(
-                    "flex",
-                    message.role === 'user' ? "justify-end" : "justify-start",
-                    "animate-fade-in"
-                  )}
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    msg.role === 'human' ? 'justify-end' : 'justify-start'
+                  }`}
                 >
-                  <div 
-                    className={cn(
-                      "max-w-[75%] rounded-2xl px-4 py-3",
-                      message.role === 'user' 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-muted text-slate-700"
-                    )}
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      msg.role === 'human'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted'
+                    }`}
                   >
-                    {message.content}
+                    {msg.content}
                   </div>
                 </div>
               ))}
               {isLoading && (
-                <div className="flex justify-start animate-fade-in">
-                  <div className="max-w-[75%] rounded-2xl px-4 py-3 bg-muted text-slate-700">
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-lg p-3">
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 </div>
               )}
@@ -173,8 +156,8 @@ const Chat = () => {
           <CardFooter className="border-t p-4 bg-white">
             <form onSubmit={handleSubmit} className="flex items-end w-full gap-2">
               <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message here..."
                 className="min-h-11 flex-1 resize-none border-slate-200 focus-visible:ring-slate-400"
                 onKeyDown={(e) => {
@@ -188,9 +171,13 @@ const Chat = () => {
                 type="submit" 
                 size="icon" 
                 className="h-11 w-11 rounded-full"
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || !message.trim()}
               >
-                <Send className="h-5 w-5" />
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
               </Button>
             </form>
           </CardFooter>

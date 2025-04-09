@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -25,7 +24,10 @@ import {
   Lightbulb,
   Zap,
   Award,
-  CheckSquare
+  CheckSquare,
+  Home,
+  MessageCircle,
+  BarChart3
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,6 +86,36 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           
           <SidebarContent>
             <SidebarMenu>
+              {/* Home */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/'}
+                  tooltip="Home"
+                  className="text-base py-3"
+                >
+                  <Link to="/">
+                    <Home className="h-5 w-5" />
+                    <span className="text-base">Home</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Dashboard */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/dashboard'}
+                  tooltip="Dashboard"
+                  className="text-base py-3"
+                >
+                  <Link to="/dashboard">
+                    <BarChart3 className="h-5 w-5" />
+                    <span className="text-base">Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               {/* Feedback Hub */}
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -93,7 +125,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                   className="text-base py-3"
                 >
                   <Link to="/feedback-hub">
-                    <Database className="h-5 w-5" />
+                    <MessageCircle className="h-5 w-5" />
                     <span className="text-base">Feedback Hub</span>
                   </Link>
                 </SidebarMenuButton>

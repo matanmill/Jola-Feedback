@@ -500,6 +500,82 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: number
       }
+      // Dashboard RPC functions
+      get_feedback_time_series: undefined;
+      get_positive_feedback_examples: {
+        Args: {
+          limit_count: number;
+        };
+        Returns: {
+          id: string;
+          content: string;
+          source: string;
+          role: string | null;
+          sentiment: string;
+          created_at: string;
+        }[];
+      };
+      get_negative_feedback_examples: {
+        Args: {
+          limit_count: number;
+        };
+        Returns: {
+          id: string;
+          content: string;
+          source: string;
+          role: string | null;
+          sentiment: string;
+          created_at: string;
+        }[];
+      };
+      get_dashboard_counts: {
+        Returns: {
+          feedback: number;
+          insights: number;
+          actionItems: number;
+          sentimentScore: number;
+          newFeedback: number;
+          newInsights: number;
+          newActionItems: number;
+          sentimentTrend: number;
+        };
+      };
+      get_role_distribution: {
+        Returns: {
+          name: string;
+          value: number;
+        }[];
+      };
+      get_arr_distribution: {
+        Returns: {
+          name: string;
+          value: number;
+        }[];
+      };
+      get_employee_count_distribution: {
+        Returns: {
+          name: string;
+          value: number;
+        }[];
+      };
+      get_sources_distribution: {
+        Returns: {
+          name: string;
+          value: number;
+        }[];
+      };
+      get_sentiment_distribution: {
+        Returns: {
+          name: string;
+          value: number;
+        }[];
+      };
+      export_dashboard_to_slack: {
+        Returns: {
+          success: boolean;
+          message: string;
+        };
+      };
     }
     Enums: {
       [_ in never]: never
