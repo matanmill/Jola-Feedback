@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   DialogHeader, 
@@ -71,6 +70,8 @@ export const FeedbackDetail: React.FC<FeedbackDetailProps> = ({ feedback }) => {
           title={`Feedback from ${feedback.name || 'Anonymous'}`}
           contentPreview={feedback.content || ''}
           iconOnly
+          variant="gradient"
+          className="ml-2"
         />
       </DialogHeader>
       

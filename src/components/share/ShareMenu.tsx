@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Share2, Slack, Mail, FileEdit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -55,12 +54,12 @@ export function ShareMenu({
   const { toast } = useToast();
 
   const shareOptions: ShareOption[] = [
-    { id: 'slack', label: 'Share to Slack', icon: Slack, color: '#4A154B' },
-    { id: 'jira', label: 'Share to Jira', icon: FileEdit, color: '#0052CC' },
+    { id: 'slack', label: 'Share to Slack', icon: Slack, color: '#2563eb' },
+    { id: 'jira', label: 'Share to Jira', icon: FileEdit, color: '#2563eb' },
   ];
 
   if (allowEmail) {
-    shareOptions.push({ id: 'email', label: 'Share via Email', icon: Mail, color: '#EA4335' });
+    shareOptions.push({ id: 'email', label: 'Share via Email', icon: Mail, color: '#2563eb' });
   }
 
   const handleShareClick = (option: ShareOption) => {
@@ -81,7 +80,7 @@ export function ShareMenu({
   const getButtonStyle = () => {
     switch (variant) {
       case 'gradient':
-        return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 transition-all shadow-md hover:shadow-lg';
+        return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg';
       case 'outline':
         return 'bg-transparent border-2 border-blue-400 text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all';
       default:

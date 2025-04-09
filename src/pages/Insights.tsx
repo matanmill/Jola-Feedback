@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useInsightsData, useInsightFeedbacksData, InsightWithLabelDetails } from '@/hooks/use-insights-data';
 import { 
