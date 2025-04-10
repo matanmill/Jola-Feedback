@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Lightbulb } from 'lucide-react';
 import { useInsightsData, InsightWithLabelDetails } from '@/hooks/use-insights-data';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { ShareMenu } from '@/components/share/ShareMenu';
+import { useLabelsData } from '@/hooks/use-insights-data';
 
 const MAX_CONTENT_LENGTH = 150; // Maximum characters to show before truncating
 
@@ -18,29 +19,17 @@ const InsightCard = ({ insight }: { insight: InsightWithLabelDetails }) => {
     : insight.content;
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3 flex flex-row justify-between">
-        <div>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-amber-500" />
+    <Card className="border border-border/50 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+      <CardHeader className="pb-4 min-h-[72px]">
+        <div className="flex items-start gap-2">
+          <Lightbulb className="h-6 w-6 text-amber-500 flex-shrink-0 mt-1" />
+          <CardTitle className="text-lg line-clamp-2 leading-tight">
             {insight.Title || 'Untitled Insight'}
           </CardTitle>
-          <CardDescription className="flex flex-wrap gap-1 mt-2">
-            {insight.label_details.map(label => (
-              <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
-                {label.label}
-              </Badge>
-            ))}
-          </CardDescription>
         </div>
-        <ShareMenu 
-          iconOnly
-          title={insight.Title || 'Insight'}
-          contentPreview={insight.content || ''}
-        />
       </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">
+      <CardContent className="flex-grow pb-2">
+        <p className="text-gray-700">
           {displayContent || 'No content available for this insight.'}
         </p>
         {shouldTruncate && (
@@ -52,7 +41,24 @@ const InsightCard = ({ insight }: { insight: InsightWithLabelDetails }) => {
             {isExpanded ? 'See Less' : 'See More'}
           </Button>
         )}
+        <div className="mt-4 pt-2 border-t border-gray-100">
+          <div className="flex flex-wrap gap-1 mb-2">
+            {insight.label_details.map(label => (
+              <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
+                {label.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
       </CardContent>
+      <CardFooter className="pt-4 flex justify-end border-t mt-auto">
+        <ShareMenu 
+          title={insight.Title || 'Insight'}
+          contentPreview={insight.content || ''}
+          variant="gradient"
+          size="sm"
+        />
+      </CardFooter>
     </Card>
   );
 };
@@ -60,6 +66,10 @@ const InsightCard = ({ insight }: { insight: InsightWithLabelDetails }) => {
 const InsightsByLabel = () => {
   const { labelId } = useParams();
   const { data: insights, isLoading, error } = useInsightsData(labelId);
+  const { data: labels = [] } = useLabelsData();
+  
+  // Find the current label details
+  const currentLabel = labels.find(label => label.label_key === labelId);
 
   useEffect(() => {
     // Debug logging
@@ -86,12 +96,9 @@ const InsightsByLabel = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Insights: {labelId}</h1>
-        <p className="text-muted-foreground mt-2">
-          Displaying insights for the category "{labelId}"
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold">
+        {currentLabel?.label || 'Unknown Label'} insights
+      </h1>
 
       {!insights || insights.length === 0 ? (
         <div className="p-6 border rounded-md bg-muted/30">
@@ -101,7 +108,7 @@ const InsightsByLabel = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {insights.map((insight) => (
             <InsightCard key={insight.insight_key} insight={insight} />
           ))}

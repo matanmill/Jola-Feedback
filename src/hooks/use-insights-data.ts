@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -85,11 +84,11 @@ export function useInsightsData(labelFilter?: string) {
       // Apply label filter if provided
       let filteredInsights = insights;
       if (labelFilter) {
-        console.log(`Filtering insights for label: ${labelFilter}`);
+        console.log(`Filtering insights for label key: ${labelFilter}`);
         filteredInsights = insights.filter(insight => 
-          insight.label_details.some(label => label.label === labelFilter)
+          insight.label_details.some(label => label.label_key === labelFilter)
         );
-        console.log(`Found ${filteredInsights.length} insights matching label: ${labelFilter}`);
+        console.log(`Found ${filteredInsights.length} insights matching label key: ${labelFilter}`);
         
         // Log the filtered insights for debugging
         filteredInsights.forEach(insight => {
