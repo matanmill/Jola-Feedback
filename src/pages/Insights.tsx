@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useInsightsData, InsightWithLabelDetails } from '@/hooks/use-insights-data';
+import { useInsightsData, InsightWithLabelDetails, useInsightChunksData } from '@/hooks/use-insights-data';
 import { 
   Card, 
   CardHeader,
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ShareMenu } from '@/components/share/ShareMenu';
+import { Table, TableHeader, TableBody, TableCell, TableRow, TableHead } from '@/components/ui/table';
 
 const MAX_CONTENT_LENGTH = 150; // Maximum characters to show before truncating
 
@@ -103,6 +104,7 @@ const Insights = () => {
   const [selectedInsight, setSelectedInsight] = useState<InsightWithLabelDetails | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { data: chunks, isLoading: isLoadingChunks } = useInsightChunksData(selectedInsight?.insight_key);
 
   const handleInsightClick = (insight: InsightWithLabelDetails) => {
     setSelectedInsight(insight);
@@ -246,6 +248,55 @@ const Insights = () => {
                     <p className="text-sm text-muted-foreground">No labels assigned</p>
                   )}
                 </div>
+              </div>
+
+              {/* Related Chunks Table */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Related Chunks</h3>
+                {isLoadingChunks ? (
+                  <div className="flex justify-center items-center p-4">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : chunks && chunks.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[120px]">Source</TableHead>
+                          <TableHead className="w-[100px]">Role</TableHead>
+                          <TableHead>Content</TableHead>
+                          <TableHead className="w-[150px]">Created At</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {chunks.map((chunk) => (
+                          <TableRow key={chunk.chunk_key}>
+                            <TableCell className="font-medium">{chunk.source}</TableCell>
+                            <TableCell>{chunk.role}</TableCell>
+                            <TableCell>
+                              <div className="max-h-[100px] overflow-y-auto">
+                                {chunk.chunk_content}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(chunk.feedback_created_at).toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-sm text-muted-foreground border rounded-md">
+                    No related chunks found
+                  </div>
+                )}
               </div>
               
               <div className="flex justify-end pt-4">
