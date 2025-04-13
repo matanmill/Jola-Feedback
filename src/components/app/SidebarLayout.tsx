@@ -25,7 +25,6 @@ import {
   Zap,
   Award,
   CheckSquare,
-  Home,
   MessageCircle,
   BarChart3
 } from 'lucide-react';
@@ -71,6 +70,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   const isActionItemsActive = location.pathname === actionItemsPath;
   const isChatActive = location.pathname === '/chat';
   const isSettingsActive = location.pathname === '/settings';
+  const isDashboardActive = location.pathname === '/dashboard';
   
   return (
     <SidebarProvider>
@@ -86,26 +86,11 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           
           <SidebarContent>
             <SidebarMenu>
-              {/* Home */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={location.pathname === '/'}
-                  tooltip="Home"
-                  className="text-base py-3"
-                >
-                  <Link to="/">
-                    <Home className="h-5 w-5" />
-                    <span className="text-base">Home</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
               {/* Dashboard */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={location.pathname === '/dashboard'}
+                  isActive={isDashboardActive}
                   tooltip="Dashboard"
                   className="text-base py-3"
                 >
@@ -264,6 +249,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           <div className="h-16 flex items-center px-6 border-b bg-white">
             <SidebarTrigger className="lg:hidden" />
             <div className="ml-4 text-lg font-medium tracking-tight">
+              {isDashboardActive && 'Dashboard'}
               {isFeedbackHubActive && 'Feedback Hub'}
               {isInsightsActive && 'Insights'}
               {isFeatureDiscoveryActive && 'Feature Discovery'}

@@ -32,7 +32,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/feedback-hub" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           
           {/* Sidebar Layout routes */}
           <Route element={<SidebarLayout><Outlet /></SidebarLayout>}>

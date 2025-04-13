@@ -27,6 +27,19 @@ export interface InsightWithFeedback {
   feedback_created_at: string;
 }
 
+export interface InsightWithChunk {
+  insight_key: string;
+  insight_content: string;
+  title: string;
+  insight_created_at: string;
+  chunk_key: string;
+  chunk_content: string;
+  source: string;
+  role: string;
+  feedback_created_at: string;
+}
+
+
 export interface InsightWithLabels {
   insight_key: string;
   content: string;
@@ -111,20 +124,20 @@ export function useInsightsData(labelFilter?: string) {
   });
 }
 
-export function useInsightFeedbacksData(insightKey?: string) {
-  const fetchInsightFeedbacks = async (): Promise<InsightWithFeedback[]> => {
+export function useInsightChunksData(insightKey?: string) {
+  const fetchInsightChunks = async (): Promise<InsightWithChunk[]> => {
     try {
       if (!insightKey) {
         return [];
       }
       
-      console.log(`Fetching feedbacks for insight ${insightKey}...`);
+      console.log(`Fetching chunks for insight ${insightKey}...`);
       
       const { data, error } = await supabase
-        .rpc('get_insights_with_feedbacks');
+        .rpc('get_insights_with_chunks');
       
       if (error) {
-        console.error('Error fetching insight feedbacks:', error);
+        console.error('Error fetching insight chunks:', error);
         throw new Error(error.message);
       }
       
@@ -135,23 +148,25 @@ export function useInsightFeedbacksData(insightKey?: string) {
       }
       
       // Cast returned data to the correct type and filter for the specific insight
-      const typedData = data as InsightWithFeedback[];
-      const relatedFeedbacks = typedData.filter(item => 
+      console.log('CHECKINGGG   Data:', data);
+      const typedData = data as InsightWithChunk[];
+      console.log('CHECKINGGG   typedData:', data);
+      const relatedChunks = typedData.filter(item => 
         item.insight_key === insightKey
       );
       
-      console.log(`Found ${relatedFeedbacks.length} feedbacks for insight ${insightKey}`);
-      
-      return relatedFeedbacks;
+      console.log(`Found ${relatedChunks.length} feedbacks for insight ${insightKey}`);
+      console.log('CHECKINGGG   relatedChunks:', relatedChunks);
+      return relatedChunks;
     } catch (error) {
-      console.error('Error in useInsightFeedbacksData:', error);
+      console.error('Error in useInsightChunksData:', error);
       throw error;
     }
   };
   
   return useQuery({
-    queryKey: ['insightFeedbacks', insightKey],
-    queryFn: fetchInsightFeedbacks,
+    queryKey: ['insightChunks', insightKey],
+    queryFn: fetchInsightChunks,
     enabled: !!insightKey
   });
 }
