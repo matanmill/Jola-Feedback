@@ -115,8 +115,8 @@ export default function Dashboard() {
         </div>
 
         {/* Charts Row 1 */}
-        <div className="grid gap-3 lg:grid-cols-7">
-          <Card className="shadow-sm lg:col-span-4">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <Card className="shadow-sm">
             <CardHeader className="p-3">
               <CardTitle className="text-sm font-medium">Feedback Over Time</CardTitle>
             </CardHeader>
@@ -128,7 +128,13 @@ export default function Dashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data?.timeSeriesData || []}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                      <XAxis 
+                        dataKey="date"
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
                       <YAxis />
                       <Tooltip />
                       <Bar dataKey="count" fill="#8884d8" />
@@ -139,7 +145,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm lg:col-span-3">
+          <Card className="shadow-sm">
             <CardHeader className="p-3">
               <CardTitle className="text-sm font-medium">Sentiment Distribution</CardTitle>
             </CardHeader>
@@ -178,7 +184,7 @@ export default function Dashboard() {
         </div>
 
         {/* Charts Row 2 */}
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
           <Card className="shadow-sm">
             <CardHeader className="p-3">
               <CardTitle className="text-sm font-medium">Roles Distribution</CardTitle>
@@ -190,14 +196,16 @@ export default function Dashboard() {
                   <div className="h-full flex items-center justify-center">Loading...</div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      layout="vertical" 
-                      data={metadataDistribution?.roles || []}
-                      margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
-                    >
+                    <BarChart data={metadataDistribution?.roles || []}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis type="category" dataKey="name" />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis />
                       <Tooltip />
                       <Bar dataKey="value" fill="#8884d8" />
                     </BarChart>
@@ -244,7 +252,7 @@ export default function Dashboard() {
         </div>
 
         {/* Charts Row 3 */}
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
           <Card className="shadow-sm">
             <CardHeader className="p-3">
               <CardTitle className="text-sm font-medium">ARR Distribution</CardTitle>
@@ -256,11 +264,15 @@ export default function Dashboard() {
                   <div className="h-full flex items-center justify-center">Loading...</div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={metadataDistribution?.arr || []}
-                    >
+                    <BarChart data={metadataDistribution?.arr || []}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
                       <YAxis />
                       <Tooltip />
                       <Bar dataKey="value" fill="#82ca9d" />
@@ -282,11 +294,15 @@ export default function Dashboard() {
                   <div className="h-full flex items-center justify-center">Loading...</div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={metadataDistribution?.employeeCount || []}
-                    >
+                    <BarChart data={metadataDistribution?.employeeCount || []}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
                       <YAxis />
                       <Tooltip />
                       <Bar dataKey="value" fill="#FFBB28" />

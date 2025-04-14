@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 
 // Define types for the dashboard data
 export interface FeedbackExample {
@@ -44,23 +45,17 @@ export interface MetadataDistribution {
   employeeCount: MetadataDistributionItem[];
 }
 
-// Mock data for dashboard demonstration
-const MOCK_TIME_SERIES_DATA: TimeSeriesDataPoint[] = [
-  { date: '2023-07-01', count: 3 },
-  { date: '2023-07-02', count: 5 },
-  { date: '2023-07-03', count: 2 },
-  { date: '2023-07-04', count: 7 },
-  { date: '2023-07-05', count: 4 },
-  { date: '2023-07-06', count: 6 },
-  { date: '2023-07-07', count: 8 },
-  { date: '2023-07-08', count: 5 },
-  { date: '2023-07-09', count: 3 },
-  { date: '2023-07-10', count: 9 },
-  { date: '2023-07-11', count: 11 },
-  { date: '2023-07-12', count: 7 },
-  { date: '2023-07-13', count: 6 },
-  { date: '2023-07-14', count: 4 },
-];
+// Mock data for items without RPC functions
+const MOCK_DASHBOARD_COUNTS: DashboardCounts = {
+  feedback: 0, // Will be replaced with actual count
+  insights: 42,
+  actionItems: 28,
+  sentimentScore: 7.5,
+  newFeedback: 24,
+  newInsights: 8,
+  newActionItems: 5,
+  sentimentTrend: 0.3
+};
 
 const MOCK_POSITIVE_FEEDBACKS: FeedbackExample[] = [
   {
@@ -78,20 +73,12 @@ const MOCK_POSITIVE_FEEDBACKS: FeedbackExample[] = [
     role: 'CEO',
     sentiment: 'Positive',
     created_at: '2023-07-08T09:15:00Z'
-  },
-  {
-    id: '3',
-    content: 'The insights generation is spot on and helps me make better decisions for my product.',
-    source: 'Email',
-    role: 'VP Product',
-    sentiment: 'Positive',
-    created_at: '2023-07-05T16:45:00Z'
   }
 ];
 
 const MOCK_NEGATIVE_FEEDBACKS: FeedbackExample[] = [
   {
-    id: '4',
+    id: '3',
     content: 'I found it difficult to understand how to generate insights from my feedback.',
     source: 'Interview',
     role: 'UX Designer',
@@ -99,57 +86,13 @@ const MOCK_NEGATIVE_FEEDBACKS: FeedbackExample[] = [
     created_at: '2023-07-09T11:20:00Z'
   },
   {
-    id: '5',
+    id: '4',
     content: 'The loading times could be improved, especially when dealing with large amounts of feedback.',
     source: 'Google Docs',
     role: 'Engineer',
     sentiment: 'Negative',
     created_at: '2023-07-07T13:40:00Z'
   }
-];
-
-const MOCK_DASHBOARD_COUNTS: DashboardCounts = {
-  feedback: 120,
-  insights: 42,
-  actionItems: 28,
-  sentimentScore: 7.5,
-  newFeedback: 24,
-  newInsights: 8,
-  newActionItems: 5,
-  sentimentTrend: 0.3
-};
-
-const MOCK_METADATA_DISTRIBUTION: MetadataDistribution = {
-  roles: [
-    { name: 'Product Manager', value: 35 },
-    { name: 'CEO', value: 25 },
-    { name: 'CTO', value: 20 },
-    { name: 'VP Product', value: 15 },
-    { name: 'Engineer', value: 10 },
-    { name: 'Designer', value: 8 },
-    { name: 'Other', value: 7 }
-  ],
-  arr: [
-    { name: 'Less than 10M', value: 30 },
-    { name: '10M-50M', value: 45 },
-    { name: '51M-100M', value: 25 },
-    { name: 'Over 100M', value: 20 }
-  ],
-  employeeCount: [
-    { name: 'Less than 100', value: 22 },
-    { name: '100-500', value: 38 },
-    { name: '501-1000', value: 25 },
-    { name: '1001-5000', value: 27 },
-    { name: 'Over 5000', value: 8 }
-  ]
-};
-
-const MOCK_SOURCES_DISTRIBUTION: MetadataDistributionItem[] = [
-  { name: 'Google Docs', value: 65 },
-  { name: 'Interview', value: 25 },
-  { name: 'Email', value: 15 },
-  { name: 'Survey', value: 10 },
-  { name: 'Other', value: 5 }
 ];
 
 const MOCK_SENTIMENT_DISTRIBUTION: MetadataDistributionItem[] = [
@@ -159,85 +102,127 @@ const MOCK_SENTIMENT_DISTRIBUTION: MetadataDistributionItem[] = [
 ];
 
 export function useDashboardData() {
-  // Use mock data for now, will replace with actual API calls later
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['dashboardData'],
-    queryFn: async (): Promise<DashboardData> => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+  const [feedbackCount, setFeedbackCount] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      const { data, error } = await supabase.rpc('count_rows', { tablename: 'feedbacks' });
+      if (error) {
+        console.error('Error fetching feedback count:', error);
+      } else {
+        setFeedbackCount(data);
+      }
+      setIsLoading(false);
+    };
+
+    fetchCount();
+  }, []);
+
+  // Fetch time series data
+  const { data: timeSeriesData, isLoading: isTimeSeriesLoading } = useQuery({
+    queryKey: ['dashboardTimeSeries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .rpc('feedbacks_created_histogram', { granularity: 'month' });
       
-      // Return mock data
-      return {
-        timeSeriesData: MOCK_TIME_SERIES_DATA,
-        positiveFeedbacks: MOCK_POSITIVE_FEEDBACKS,
-        negativeFeedbacks: MOCK_NEGATIVE_FEEDBACKS
-      };
+      if (error) throw error;
+      
+      return data.map((item: any) => {
+        const dateObj = new Date(item.date_bucket);
+        const month = new Intl.DateTimeFormat('en', { month: 'long' }).format(dateObj);
+        
+        return {
+          date: month,
+          count: parseInt(item.count)
+        };
+      });
     }
   });
-  
-  // Mock dashboard counts
-  const { data: counts, isLoading: isCountsLoading } = useQuery({
-    queryKey: ['dashboardCounts'],
-    queryFn: async (): Promise<DashboardCounts> => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      return MOCK_DASHBOARD_COUNTS;
+
+  // Fetch role distribution
+  const { data: roleDistribution, isLoading: isRoleLoading } = useQuery({
+    queryKey: ['roleDistribution'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('feedback_role_distribution');
+      if (error) throw error;
+      return data.map((item: any) => ({
+        name: item.role || 'Unknown',
+        value: item.count
+      }));
     }
   });
-  
-  // Mock metadata distribution
-  const { data: metadataDistribution, isLoading: isMetadataLoading } = useQuery({
-    queryKey: ['metadataDistribution'],
-    queryFn: async (): Promise<MetadataDistribution> => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 700));
-      
-      return MOCK_METADATA_DISTRIBUTION;
-    }
-  });
-  
-  // Mock sources distribution
+
+  // Fetch source distribution
   const { data: sourcesDistribution, isLoading: isSourcesLoading } = useQuery({
     queryKey: ['sourcesDistribution'],
-    queryFn: async (): Promise<MetadataDistributionItem[]> => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      return MOCK_SOURCES_DISTRIBUTION;
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('feedback_source_distribution');
+      if (error) throw error;
+      return data.map((item: any) => ({
+        name: item.source || 'Unknown',
+        value: item.count
+      }));
     }
   });
-  
-  // Mock sentiment distribution
-  const { data: sentimentDistribution, isLoading: isSentimentLoading } = useQuery({
-    queryKey: ['sentimentDistribution'],
-    queryFn: async (): Promise<MetadataDistributionItem[]> => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return MOCK_SENTIMENT_DISTRIBUTION;
+
+  // Fetch ARR distribution
+  const { data: arrDistribution, isLoading: isArrLoading } = useQuery({
+    queryKey: ['arrDistribution'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('feedback_arr_distribution');
+      if (error) throw error;
+      return data.map((item: any) => ({
+        name: item.arr_range || 'Unknown',
+        value: item.count
+      }));
     }
   });
-  
+
+  // Fetch employee count distribution
+  const { data: employeeCountDistribution, isLoading: isEmployeeCountLoading } = useQuery({
+    queryKey: ['employeeCountDistribution'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('feedback_employee_count_distribution');
+      if (error) throw error;
+      return data.map((item: any) => ({
+        name: item.employee_range || 'Unknown',
+        value: parseInt(item.count)
+      }));
+    }
+  });
+
+  // Combine metadata distributions
+  const metadataDistribution = {
+    roles: roleDistribution || [],
+    arr: arrDistribution || [],
+    employeeCount: employeeCountDistribution || []
+  };
+
   // Export to Slack function (mock implementation)
   const exportToSlack = async () => {
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
     return {
       success: true,
       message: 'Dashboard exported to Slack successfully'
     };
   };
-  
+
   return {
-    data,
-    counts,
+    data: {
+      timeSeriesData: timeSeriesData || [],
+      positiveFeedbacks: MOCK_POSITIVE_FEEDBACKS,
+      negativeFeedbacks: MOCK_NEGATIVE_FEEDBACKS
+    },
+    counts: {
+      ...MOCK_DASHBOARD_COUNTS,
+      feedback: feedbackCount || 0
+    },
     metadataDistribution,
-    sourcesDistribution,
-    sentimentDistribution,
-    isLoading: isLoading || isCountsLoading || isMetadataLoading || isSourcesLoading || isSentimentLoading,
-    error,
+    sourcesDistribution: sourcesDistribution || [],
+    sentimentDistribution: MOCK_SENTIMENT_DISTRIBUTION,
+    isLoading,
+    error: null,
     exportToSlack
   };
 } 
