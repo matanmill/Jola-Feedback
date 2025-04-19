@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
@@ -150,7 +149,9 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
                   >
                     <div className="flex items-center gap-2">
                       <UserRound className="h-4 w-4 text-slate-400" />
-                      <span>{feedback.name || 'Anonymous'}</span>
+                      <span className="blur-sm hover:blur-none transition-all duration-200">
+                        {feedback.name || 'Anonymous'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Building className="h-4 w-4 text-slate-400" />
@@ -187,6 +188,12 @@ const FeedbackRepository: React.FC<FeedbackRepositoryProps> = ({ isDebugMode }) 
                   <div className="p-4 bg-slate-50 space-y-4">
                     <div className="flex justify-between items-start">
                       <div className="space-y-4 flex-1">
+                        <div>
+                          <h3 className="text-sm font-medium text-muted-foreground mb-1">Name</h3>
+                          <span className="blur-sm hover:blur-none transition-all duration-200">
+                            {feedback.name || 'Anonymous'}
+                          </span>
+                        </div>
                         <div>
                           <h3 className="text-sm font-medium text-muted-foreground mb-1">Role</h3>
                           {feedback.role ? (
