@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,6 +7,7 @@ export interface FeatureRequest {
   title: string;
   description: string | null;
   created_at: string | null;
+  order: number;
 }
 
 export interface FeatureEvidence {
@@ -30,10 +30,11 @@ export function useFeatureRequests() {
     console.log('Fetching feature requests from Supabase');
     
     try {
-      // Use a raw query to get feature_requests data since TypeScript isn't recognizing the table
+      // Use a raw query to get feature_requests data sorted by order
       const { data, error } = await supabase
         .from('feature_requests')
-        .select('*');
+        .select('*')
+        .order('order', { ascending: true });
       
       if (error) {
         console.error('Error fetching feature requests:', error);
