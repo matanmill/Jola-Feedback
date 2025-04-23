@@ -8,7 +8,8 @@ import {
   User, 
   Calendar, 
   Link, 
-  Loader2 
+  Loader2,
+  FileText
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -136,6 +137,18 @@ const FeatureDiscovery = () => {
                       </Tooltip>
                     </TooltipProvider>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Implement PRD generation
+                    }}
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    Generate PRD
+                  </Button>
                   <ShareMenu 
                     title={feature.title || 'Feature Request'}
                     contentPreview={feature.description || ''}
