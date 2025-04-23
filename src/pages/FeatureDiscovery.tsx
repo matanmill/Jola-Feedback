@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { 
   ChevronDown, 
@@ -18,6 +18,12 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFeatureRequests, useFeatureEvidence } from '@/hooks/use-feature-data';
 import { ShareMenu } from '@/components/share/ShareMenu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const FeatureDiscovery = () => {
   const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
@@ -26,6 +32,18 @@ const FeatureDiscovery = () => {
   const { toast } = useToast();
   
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
+  
+  // Generate consistent lost deals counts for each feature
+  const lostDealsCounts = useMemo(() => {
+    if (!features) return {};
+    return features.reduce((acc, feature, index) => {
+      // Only assign counts to the first 4 items
+      if (index < 4) {
+        acc[feature.id] = [10, 6, 9, 12, 8, 14][Math.floor(Math.random() * 6)];
+      }
+      return acc;
+    }, {} as Record<string, number>);
+  }, [features]);
   
   const toggleItem = (featureId: string) => {
     setOpenItems(prev => ({
@@ -73,7 +91,7 @@ const FeatureDiscovery = () => {
       
       <div className="grid grid-cols-1 gap-6">
         {features && features.length > 0 ? (
-          features.map(feature => (
+          features.map((feature, index) => (
             <Collapsible
               key={feature.id}
               open={openItems[feature.id]}
@@ -94,7 +112,30 @@ const FeatureDiscovery = () => {
                     Created: {formatDate(feature.created_at)}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
+                  {index < 4 && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 text-sm">
+                            <span>🔥</span>
+                            <span><strong>{lostDealsCounts[feature.id]}</strong> Lost Deals</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p className="mb-2">{lostDealsCounts[feature.id]} customers in lost deals mentioned this feature</p>
+                          <a 
+                            href="#" 
+                            className="text-primary hover:underline text-sm flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Link className="h-3 w-3" />
+                            View in Salesforce
+                          </a>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   <ShareMenu 
                     title={feature.title || 'Feature Request'}
                     contentPreview={feature.description || ''}

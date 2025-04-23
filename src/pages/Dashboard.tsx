@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { MessageSquare, Download, Lightbulb, Activity, CheckSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
+import { IntegrationsSection } from '@/components/IntegrationsSection';
 
 export default function Dashboard() {
   const { 
@@ -48,20 +49,30 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Button 
-          onClick={handleExportToSlack} 
-          disabled={isLoading}
-          className="flex items-center gap-2"
-          size="sm"
-        >
-          <Download className="h-4 w-4" />
-          Export to Slack
-        </Button>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome to your feedback analytics dashboard
+        </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* Integrations Section */}
+        <IntegrationsSection />
+
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Overview</h2>
+          <Button 
+            onClick={handleExportToSlack} 
+            disabled={isLoading}
+            className="flex items-center gap-2"
+            size="sm"
+          >
+            <Download className="h-4 w-4" />
+            Export to Slack
+          </Button>
+        </div>
+
         {/* Key Metrics */}
         <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
           <Card className="shadow-sm">

@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import SidebarLayout from "./components/app/SidebarLayout";
 import Dashboard from '@/pages/Dashboard';
+import UserVoice from '@/pages/UserVoice';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="chat" element={<Chat />} />
             <Route path="settings" element={<Settings />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="user-voice" element={<UserVoice />} />
           </Route>
           
           {/* Catch-all route */}
