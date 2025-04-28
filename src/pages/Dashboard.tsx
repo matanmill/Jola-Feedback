@@ -220,7 +220,7 @@ export default function Dashboard() {
                 ) : (
                   data?.positiveFeedbacks?.map((feedback, index) => (
                     <div key={index} className="p-2 bg-green-50 rounded-md">
-                      <p className="text-xs">{feedback.content}</p>
+                      <p className="text-base">{feedback.content}</p>
                       <div className="mt-1 text-xs text-gray-500">
                         <span>{feedback.source}</span>
                         {feedback.role && (
@@ -245,7 +245,7 @@ export default function Dashboard() {
                 ) : (
                   data?.negativeFeedbacks?.map((feedback, index) => (
                     <div key={index} className="p-2 bg-red-50 rounded-md">
-                      <p className="text-xs">{feedback.content}</p>
+                      <p className="text-base">{feedback.content}</p>
                       <div className="mt-1 text-xs text-gray-500">
                         <span>{feedback.source}</span>
                         {feedback.role && (
