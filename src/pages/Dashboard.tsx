@@ -1,30 +1,138 @@
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { MessageSquare, Download, Lightbulb, Activity, CheckSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { MessageSquare, Download, Lightbulb, Activity, CheckSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
 import { IntegrationsSection } from '@/components/IntegrationsSection';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { useInsightsData, useInsightChunksData } from '@/hooks/use-insights-data';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { ShareMenu } from '@/components/share/ShareMenu';
+
+const MAX_CONTENT_LENGTH = 150; // Maximum characters to show before truncating
+
+const DemoInsightCard = ({ insight }) => {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const shouldTruncate = insight.content && insight.content.length > MAX_CONTENT_LENGTH;
+  const displayContent = shouldTruncate && !isExpanded 
+    ? `${insight.content.substring(0, MAX_CONTENT_LENGTH)}...`
+    : insight.content;
+  const [isShareClicked, setIsShareClicked] = React.useState(false);
+  const [userCount, setUserCount] = React.useState(0);
+  const { data: chunks } = useInsightChunksData(insight.insight_key);
+
+  React.useEffect(() => {
+    if (chunks) {
+      setUserCount(chunks.length);
+    }
+  }, [chunks]);
+
+  const handleShareClick = (e) => {
+    setIsShareClicked(true);
+    e.stopPropagation();
+  };
+
+  // Calculate progress bar value (assuming max 20 users for full bar)
+  const progressValue = Math.min((userCount / 20) * 100, 100);
+
+  return (
+    <Card className="border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-4 min-h-[72px]">
+        <div className="flex items-start gap-2">
+          <Lightbulb className="h-6 w-6 text-amber-500 flex-shrink-0 mt-1" />
+          <CardTitle className="text-lg line-clamp-2 leading-tight">
+            {insight.Title || 'Untitled Insight'}
+          </CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold text-blue-600">{userCount}</span>
+              <span className="text-sm text-muted-foreground">users mentioned this</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Progress value={progressValue} className="h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Strength</span>
+              <span>{userCount} mentions</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-gray-700 mt-4">
+          {displayContent || 'No content available for this insight.'}
+        </p>
+        {shouldTruncate && (
+          <Button
+            variant="link"
+            className="p-0 h-auto text-blue-600 hover:text-blue-800"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? 'See Less' : 'See More'}
+          </Button>
+        )}
+        <div className="mt-4 pt-2 border-t border-gray-100">
+          <div className="flex flex-wrap gap-1 mb-2">
+            {insight.label_details?.map(label => (
+              <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
+                {label.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="pt-4 flex justify-end border-t mt-auto">
+        <ShareMenu 
+          title={insight.Title || 'Insight'}
+          contentPreview={insight.content || ''}
+          onClick={handleShareClick}
+          variant="gradient"
+          size="sm"
+        />
+      </CardFooter>
+    </Card>
+  );
+};
 
 export default function Dashboard() {
   const { 
     data, 
     isLoading, 
     error, 
-    metadataDistribution, 
-    sourcesDistribution, 
-    sentimentDistribution, 
+    sentimentDistribution,
     counts,
     exportToSlack
   } = useDashboardData();
 
-  // Color configurations
+  const { data: insights = [], isLoading: isLoadingInsights } = useInsightsData();
+  const [expandedDemoInsights, setExpandedDemoInsights] = React.useState(false);
+  const MAX_DEMO_INSIGHTS = 3;
+
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   const SENTIMENT_COLORS = {
     positive: '#10b981',
     neutral: '#6b7280',
     negative: '#ef4444'
   };
+
+  // Filter Demo insights
+  const demoInsights = React.useMemo(() => {
+    if (!insights || !Array.isArray(insights)) return [];
+    return insights.filter(insight => 
+      insight?.label_details?.some(label => label?.label === 'Demo')
+    );
+  }, [insights]);
+
+  // Get displayed insights based on expanded state
+  const displayedDemoInsights = expandedDemoInsights 
+    ? demoInsights 
+    : demoInsights.slice(0, MAX_DEMO_INSIGHTS);
+  
+  const hasMoreDemoInsights = demoInsights.length > MAX_DEMO_INSIGHTS;
 
   const handleExportToSlack = async () => {
     try {
@@ -73,257 +181,60 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-          <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between p-3">
-              <CardTitle className="text-sm font-medium">Total Feedback</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <div className="text-xl font-bold">{isLoading ? '...' : counts?.feedback || 0}</div>
-              <p className="text-xs text-muted-foreground">+{isLoading ? '...' : counts?.newFeedback || 0} since last month</p>
-            </CardContent>
-          </Card>
+        {/* Sentiment Score */}
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between p-3">
+            <CardTitle className="text-sm font-medium">Sentiment Score</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <div className="text-xl font-bold">{isLoading ? '...' : (counts?.sentimentScore || 0).toFixed(1)}</div>
+            <p className="text-xs text-muted-foreground">
+              {isLoading ? '...' : 
+                counts?.sentimentTrend > 0 
+                  ? `↑ ${counts.sentimentTrend.toFixed(1)} increase` 
+                  : `↓ ${Math.abs(counts?.sentimentTrend || 0).toFixed(1)} decrease`}
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between p-3">
-              <CardTitle className="text-sm font-medium">Total Insights</CardTitle>
-              <Lightbulb className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <div className="text-xl font-bold">{isLoading ? '...' : counts?.insights || 0}</div>
-              <p className="text-xs text-muted-foreground">+{isLoading ? '...' : counts?.newInsights || 0} since last month</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between p-3">
-              <CardTitle className="text-sm font-medium">Action Items</CardTitle>
-              <CheckSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <div className="text-xl font-bold">{isLoading ? '...' : counts?.actionItems || 0}</div>
-              <p className="text-xs text-muted-foreground">+{isLoading ? '...' : counts?.newActionItems || 0} since last month</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between p-3">
-              <CardTitle className="text-sm font-medium">Sentiment Score</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <div className="text-xl font-bold">{isLoading ? '...' : (counts?.sentimentScore || 0).toFixed(1)}</div>
-              <p className="text-xs text-muted-foreground">
-                {isLoading ? '...' : 
-                  counts?.sentimentTrend > 0 
-                    ? `↑ ${counts.sentimentTrend.toFixed(1)} increase` 
-                    : `↓ ${Math.abs(counts?.sentimentTrend || 0).toFixed(1)} decrease`}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Row 1 */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <Card className="shadow-sm">
-            <CardHeader className="p-3">
-              <CardTitle className="text-sm font-medium">Feedback Over Time</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 p-3">
-              <div className="h-[250px]">
-                {isLoading ? (
-                  <div className="h-full flex items-center justify-center">Loading...</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data?.timeSeriesData || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="date"
-                        tick={{ fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#8884d8" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader className="p-3">
-              <CardTitle className="text-sm font-medium">Sentiment Distribution</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 p-3">
-              <div className="h-[250px]">
-                {isLoading ? (
-                  <div className="h-full flex items-center justify-center">Loading...</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={sentimentDistribution}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={70}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {sentimentDistribution?.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={SENTIMENT_COLORS[entry.name.toLowerCase()] || COLORS[index % COLORS.length]} 
-                          />
-                        ))}
-                      </Pie>
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Row 2 */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <Card className="shadow-sm">
-            <CardHeader className="p-3">
-              <CardTitle className="text-sm font-medium">Roles Distribution</CardTitle>
-              <CardDescription className="text-xs">By company role</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0 p-3">
-              <div className="h-[220px]">
-                {isLoading ? (
-                  <div className="h-full flex items-center justify-center">Loading...</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={metadataDistribution?.roles || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#8884d8" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader className="p-3">
-              <CardTitle className="text-sm font-medium">Feedback Sources</CardTitle>
-              <CardDescription className="text-xs">Distribution by source</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0 p-3">
-              <div className="h-[220px]">
-                {isLoading ? (
-                  <div className="h-full flex items-center justify-center">Loading...</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={sourcesDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={30}
-                        outerRadius={70}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                      >
-                        {sourcesDistribution?.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Row 3 */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <Card className="shadow-sm">
-            <CardHeader className="p-3">
-              <CardTitle className="text-sm font-medium">ARR Distribution</CardTitle>
-              <CardDescription className="text-xs">By company revenue</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0 p-3">
-              <div className="h-[220px]">
-                {isLoading ? (
-                  <div className="h-full flex items-center justify-center">Loading...</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={metadataDistribution?.arr || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#82ca9d" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader className="p-3">
-              <CardTitle className="text-sm font-medium">Company Size</CardTitle>
-              <CardDescription className="text-xs">By employee count</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0 p-3">
-              <div className="h-[220px]">
-                {isLoading ? (
-                  <div className="h-full flex items-center justify-center">Loading...</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={metadataDistribution?.employeeCount || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#FFBB28" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Sentiment Distribution */}
+        <Card className="shadow-sm">
+          <CardHeader className="p-3">
+            <CardTitle className="text-sm font-medium">Sentiment Distribution</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 p-3">
+            <div className="h-[250px]">
+              {isLoading ? (
+                <div className="h-full flex items-center justify-center">Loading...</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={sentimentDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={70}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {sentimentDistribution?.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={SENTIMENT_COLORS[entry.name.toLowerCase()] || COLORS[index % COLORS.length]} 
+                        />
+                      ))}
+                    </Pie>
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Feedback Examples */}
         <div className="grid gap-3 lg:grid-cols-2">
@@ -376,6 +287,57 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Demo Insights Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 text-base">
+                Demo Insights
+              </Badge>
+              <span className="text-sm text-muted-foreground">({demoInsights.length} insights)</span>
+            </h2>
+            {hasMoreDemoInsights && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                onClick={() => setExpandedDemoInsights(!expandedDemoInsights)}
+              >
+                {expandedDemoInsights ? (
+                  <>
+                    Show Less
+                    <ChevronUp className="ml-2 h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Show More
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+
+          {isLoadingInsights ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : demoInsights.length === 0 ? (
+            <div className="p-8 text-center border rounded-lg bg-muted/30">
+              <h3 className="text-xl font-medium text-muted-foreground">No Demo insights found</h3>
+              <p className="text-muted-foreground mt-2">
+                Insights labeled as "Demo" will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {displayedDemoInsights.map((insight) => (
+                <DemoInsightCard key={insight.insight_key} insight={insight} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
