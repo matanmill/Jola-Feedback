@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft, LayoutDashboard, MessageSquare, BarChart, Lightbulb, Trophy, CheckSquare, MessageCircle, Settings } from "lucide-react"
+import { PanelLeft, LayoutDashboard, MessageSquare, BarChart, Lightbulb, MessageCircle, Settings } from "lucide-react"
 import { useLocation } from "react-router-dom"
 
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -781,16 +781,6 @@ const menuItems = [
     href: "/feature-discovery",
   },
   {
-    title: "Success Stories",
-    icon: <Trophy className="h-5 w-5" />,
-    href: "/success-stories",
-  },
-  {
-    title: "Action Items",
-    icon: <CheckSquare className="h-5 w-5" />,
-    href: "/action-items",
-  },
-  {
     title: "Chat",
     icon: <MessageCircle className="h-5 w-5" />,
     href: "/chat",
@@ -800,7 +790,7 @@ const menuItems = [
     icon: <Settings className="h-5 w-5" />,
     href: "/settings",
   },
-]
+];
 
 export {
   Sidebar,

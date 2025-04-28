@@ -59,15 +59,11 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   
   const feedbackHubPath = '/feedback-hub';
   const featureDiscoveryPath = '/feature-discovery';
-  const successStoriesPath = '/success-stories';
-  const actionItemsPath = '/action-items';
   const insightsPaths = ['/insights', ...labels.map(l => `/insights/${l.label_key}`)];
   
   const isInsightsActive = insightsPaths.some(path => location.pathname.startsWith(path));
   const isFeedbackHubActive = location.pathname === feedbackHubPath;
   const isFeatureDiscoveryActive = location.pathname === featureDiscoveryPath;
-  const isSuccessStoriesActive = location.pathname === successStoriesPath;
-  const isActionItemsActive = location.pathname === actionItemsPath;
   const isChatActive = location.pathname === '/chat';
   const isSettingsActive = location.pathname === '/settings';
   const isDashboardActive = location.pathname === '/dashboard';
@@ -175,36 +171,6 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
-              {/* Success Stories */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isSuccessStoriesActive}
-                  tooltip="Success Stories"
-                  className="text-base py-3"
-                >
-                  <Link to="/success-stories">
-                    <Award className="h-5 w-5" />
-                    <span className="text-base">Success Stories</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              {/* Action Items */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActionItemsActive}
-                  tooltip="Action Items"
-                  className="text-base py-3"
-                >
-                  <Link to="/action-items">
-                    <CheckSquare className="h-5 w-5" />
-                    <span className="text-base">Action Items</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
               {/* Chat */}
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -253,8 +219,6 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
               {isFeedbackHubActive && 'Feedback Hub'}
               {isInsightsActive && 'Insights'}
               {isFeatureDiscoveryActive && 'Feature Discovery'}
-              {isSuccessStoriesActive && 'Success Stories'}
-              {isActionItemsActive && 'Action Items'}
               {isChatActive && 'Chat'}
               {isSettingsActive && 'Settings'}
             </div>
