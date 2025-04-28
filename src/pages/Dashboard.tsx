@@ -1,44 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { MessageSquare, Download, Lightbulb, Activity, CheckSquare, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageSquare, Download, Lightbulb, Activity, CheckSquare, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
 import { IntegrationsSection } from '@/components/IntegrationsSection';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { useInsightsData, useInsightChunksData } from '@/hooks/use-insights-data';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { useInsightsData, InsightWithLabelDetails } from '@/hooks/use-insights-data';
+import { BarChart2 } from 'lucide-react';
+import { useFeatureRequests } from '@/hooks/use-feature-data';
 import { ShareMenu } from '@/components/share/ShareMenu';
+import { useNavigate } from 'react-router-dom';
 
-const MAX_CONTENT_LENGTH = 150; // Maximum characters to show before truncating
+const MAX_DASHBOARD_INSIGHTS = 3;
 
-const DemoInsightCard = ({ insight }) => {
-  const [isExpanded, setIsExpanded] = React.useState(false);
-  const shouldTruncate = insight.content && insight.content.length > MAX_CONTENT_LENGTH;
+const marketTrends = [
+  { date: '2024-01', pricing: 15, ui: 5, integration: 120, marketSentiment: 0.15 },
+  { date: '2024-02', pricing: 92, ui: 8, integration: 145, marketSentiment: 0.48 },
+  { date: '2024-03', pricing: 48, ui: 92, integration: 132, marketSentiment: 0.77 },
+  { date: '2024-04', pricing: 195, ui: 5, integration: 18, marketSentiment: 0.79 },
+  { date: '2024-05', pricing: 95, ui: 120, integration: 42, marketSentiment: 0.45 },
+  { date: '2024-06', pricing: 100, ui: 88, integration: 156, marketSentiment: 0.51 },
+];
+
+const DashboardInsightCard = ({ insight }: { insight: InsightWithLabelDetails }) => {
+  const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const shouldTruncate = insight.content && insight.content.length > 150;
   const displayContent = shouldTruncate && !isExpanded 
-    ? `${insight.content.substring(0, MAX_CONTENT_LENGTH)}...`
+    ? `${insight.content.substring(0, 150)}...`
     : insight.content;
-  const [isShareClicked, setIsShareClicked] = React.useState(false);
-  const [userCount, setUserCount] = React.useState(0);
-  const { data: chunks } = useInsightChunksData(insight.insight_key);
+  const [isShareClicked, setIsShareClicked] = useState(false);
 
-  React.useEffect(() => {
-    if (chunks) {
-      setUserCount(chunks.length);
-    }
-  }, [chunks]);
-
-  const handleShareClick = (e) => {
+  const handleShareClick = (e: React.MouseEvent) => {
     setIsShareClicked(true);
     e.stopPropagation();
   };
 
-  // Calculate progress bar value (assuming max 20 users for full bar)
-  const progressValue = Math.min((userCount / 20) * 100, 100);
+  const handleCardClick = () => {
+    navigate('/insights');
+  };
 
   return (
-    <Card className="border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+    <Card 
+      className="border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full"
+      onClick={handleCardClick}
+    >
       <CardHeader className="pb-4 min-h-[72px]">
         <div className="flex items-start gap-2">
           <Lightbulb className="h-6 w-6 text-amber-500 flex-shrink-0 mt-1" />
@@ -47,37 +56,25 @@ const DemoInsightCard = ({ insight }) => {
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-blue-600">{userCount}</span>
-              <span className="text-sm text-muted-foreground">users mentioned this</span>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Progress value={progressValue} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Strength</span>
-              <span>{userCount} mentions</span>
-            </div>
-          </div>
-        </div>
-        <p className="text-gray-700 mt-4">
+      <CardContent className="flex-grow pb-2">
+        <p className="text-gray-700">
           {displayContent || 'No content available for this insight.'}
         </p>
         {shouldTruncate && (
           <Button
             variant="link"
             className="p-0 h-auto text-blue-600 hover:text-blue-800"
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
           >
             {isExpanded ? 'See Less' : 'See More'}
           </Button>
         )}
         <div className="mt-4 pt-2 border-t border-gray-100">
           <div className="flex flex-wrap gap-1 mb-2">
-            {insight.label_details?.map(label => (
+            {insight.label_details.map(label => (
               <Badge key={label.label_key} variant="outline" className="bg-blue-50 text-blue-700">
                 {label.label}
               </Badge>
@@ -85,7 +82,8 @@ const DemoInsightCard = ({ insight }) => {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="pt-4 flex justify-end border-t mt-auto">
+      <CardFooter className="pt-4 flex justify-between border-t mt-auto">
+        <div />
         <ShareMenu 
           title={insight.Title || 'Insight'}
           contentPreview={insight.content || ''}
@@ -108,31 +106,14 @@ export default function Dashboard() {
     exportToSlack
   } = useDashboardData();
 
-  const { data: insights = [], isLoading: isLoadingInsights } = useInsightsData();
-  const [expandedDemoInsights, setExpandedDemoInsights] = React.useState(false);
-  const MAX_DEMO_INSIGHTS = 3;
+  const { data: insights = [], isLoading: isLoadingInsights, error: insightsError } = useInsightsData();
+  const { data: features = [], isLoading: isLoadingFeatures, error: featuresError } = useFeatureRequests();
+  const navigate = useNavigate();
+  const [selectedInsight, setSelectedInsight] = useState<InsightWithLabelDetails | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-  const SENTIMENT_COLORS = {
-    positive: '#10b981',
-    neutral: '#6b7280',
-    negative: '#ef4444'
-  };
-
-  // Filter Demo insights
-  const demoInsights = React.useMemo(() => {
-    if (!insights || !Array.isArray(insights)) return [];
-    return insights.filter(insight => 
-      insight?.label_details?.some(label => label?.label === 'Demo')
-    );
-  }, [insights]);
-
-  // Get displayed insights based on expanded state
-  const displayedDemoInsights = expandedDemoInsights 
-    ? demoInsights 
-    : demoInsights.slice(0, MAX_DEMO_INSIGHTS);
-  
-  const hasMoreDemoInsights = demoInsights.length > MAX_DEMO_INSIGHTS;
+  // Only show the first 3 insights
+  const displayedInsights = insights.slice(0, MAX_DASHBOARD_INSIGHTS);
 
   const handleExportToSlack = async () => {
     try {
@@ -181,63 +162,53 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Sentiment Score */}
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between p-3">
-            <CardTitle className="text-sm font-medium">Sentiment Score</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0">
-            <div className="text-xl font-bold">{isLoading ? '...' : (counts?.sentimentScore || 0).toFixed(1)}</div>
-            <p className="text-xs text-muted-foreground">
-              {isLoading ? '...' : 
-                counts?.sentimentTrend > 0 
-                  ? `↑ ${counts.sentimentTrend.toFixed(1)} increase` 
-                  : `↓ ${Math.abs(counts?.sentimentTrend || 0).toFixed(1)} decrease`}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Sentiment Distribution */}
-        <Card className="shadow-sm">
-          <CardHeader className="p-3">
-            <CardTitle className="text-sm font-medium">Sentiment Distribution</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 p-3">
-            <div className="h-[250px]">
-              {isLoading ? (
-                <div className="h-full flex items-center justify-center">Loading...</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={sentimentDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={70}
-                      fill="#8884d8"
-                      dataKey="value"
-                      nameKey="name"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {sentimentDistribution?.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={SENTIMENT_COLORS[entry.name.toLowerCase()] || COLORS[index % COLORS.length]} 
-                        />
-                      ))}
-                    </Pie>
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Feedback Examples */}
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
+          {/* Compact Sentiment Distribution */}
+          <Card className="shadow-sm">
+            <CardHeader className="p-3 pb-1 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-medium">Sentiment Distribution</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 p-3">
+              <div className="flex items-center justify-center">
+                {isLoading ? (
+                  <div className="h-full flex items-center justify-center">Loading...</div>
+                ) : (
+                  <ResponsiveContainer width={120} height={120}>
+                    <PieChart>
+                      <Pie
+                        data={sentimentDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={50}
+                        fill="#8884d8"
+                        dataKey="value"
+                        nameKey="name"
+                        label={false}
+                      >
+                        {sentimentDistribution?.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.name.toLowerCase() === 'positive' ? '#10b981' : entry.name.toLowerCase() === 'neutral' ? '#6b7280' : '#ef4444'} 
+                          />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+                <div className="ml-4 space-y-1">
+                  {sentimentDistribution?.map((entry, idx) => (
+                    <div key={entry.name} className="flex items-center gap-2 text-xs">
+                      <span className="inline-block w-3 h-3 rounded-full" style={{background: entry.name.toLowerCase() === 'positive' ? '#10b981' : entry.name.toLowerCase() === 'neutral' ? '#6b7280' : '#ef4444'}}></span>
+                      <span>{entry.name}</span>
+                      <span className="font-semibold">{entry.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          {/* Feedback Examples */}
           <Card className="shadow-sm">
             <CardHeader className="p-3">
               <CardTitle className="text-sm font-medium text-green-500">Positive Feedback Examples</CardTitle>
@@ -289,57 +260,188 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Demo Insights Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 text-base">
-                Demo Insights
-              </Badge>
-              <span className="text-sm text-muted-foreground">({demoInsights.length} insights)</span>
-            </h2>
-            {hasMoreDemoInsights && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground"
-                onClick={() => setExpandedDemoInsights(!expandedDemoInsights)}
-              >
-                {expandedDemoInsights ? (
-                  <>
-                    Show Less
-                    <ChevronUp className="ml-2 h-4 w-4" />
-                  </>
-                ) : (
-                  <>
-                    Show More
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+        {/* Market & Customer Sentiment Trends */}
+        <Card className="shadow-sm">
+          <CardHeader className="flex items-center gap-2 p-3 pb-1">
+            <BarChart2 className="h-5 w-5 mr-2" />
+            <CardTitle className="text-sm font-medium">Market & Customer Sentiment Trends</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 p-3">
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={marketTrends} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }}
+                    tickMargin={10}
+                    height={60}
+                    label={{ value: 'Time Period', position: 'insideBottom', offset: -10 }}
+                  />
+                  <YAxis 
+                    yAxisId="left" 
+                    tick={{ fontSize: 12 }}
+                    tickMargin={10}
+                    label={{ value: 'Topic Mentions', angle: -90, position: 'insideLeft' }}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    tick={{ fontSize: 12 }}
+                    tickMargin={10}
+                    label={{ value: 'Market Sentiment', angle: 90, position: 'insideRight' }}
+                  />
+                  <Tooltip />
+                  <Legend verticalAlign="top" height={36} wrapperStyle={{ paddingBottom: '20px' }} />
+                  <Line 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="pricing" 
+                    stroke="#8884d8" 
+                    name="Pricing Discussions" 
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                    animationDuration={1000}
+                  />
+                  <Line 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="ui" 
+                    stroke="#82ca9d" 
+                    name="UI/UX Feedback" 
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                    animationDuration={1000}
+                  />
+                  <Line 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="integration" 
+                    stroke="#ffc658" 
+                    name="Integration Topics" 
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                    animationDuration={1000}
+                  />
+                  <Line 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="marketSentiment" 
+                    stroke="#ff6b6b" 
+                    name="Market Sentiment" 
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
+        {/* Top Insights Section */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4 tracking-tight">Top insights from this week</h2>
           {isLoadingInsights ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="flex justify-center items-center h-32">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          ) : demoInsights.length === 0 ? (
-            <div className="p-8 text-center border rounded-lg bg-muted/30">
-              <h3 className="text-xl font-medium text-muted-foreground">No Demo insights found</h3>
-              <p className="text-muted-foreground mt-2">
-                Insights labeled as "Demo" will appear here.
-              </p>
-            </div>
+          ) : insightsError ? (
+            <div className="p-4 text-red-600">Error loading insights: {insightsError.message}</div>
+          ) : displayedInsights.length === 0 ? (
+            <div className="p-4 text-muted-foreground">No insights available.</div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {displayedDemoInsights.map((insight) => (
-                <DemoInsightCard key={insight.insight_key} insight={insight} />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {displayedInsights.map(insight => (
+                <Card
+                  key={insight.insight_key}
+                  className="flex flex-col h-full cursor-pointer hover:shadow-lg transition"
+                  onClick={() => navigate('/insights')}
+                >
+                  <CardHeader className="flex flex-row items-center gap-2 pb-2">
+                    <Lightbulb className="h-6 w-6 text-amber-500 flex-shrink-0" />
+                    <CardTitle className="font-bold text-lg truncate flex-1">
+                      {insight.Title || 'Untitled Insight'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-grow pb-2">
+                    <p className="text-gray-700 text-sm line-clamp-3">
+                      {insight.content || 'No content available for this insight.'}
+                    </p>
+                  </CardContent>
+                  <CardFooter className="pt-2 border-t mt-auto flex justify-end">
+                    <ShareMenu
+                      title={insight.Title || 'Insight'}
+                      contentPreview={insight.content || ''}
+                      onClick={e => e.stopPropagation()}
+                      variant="gradient"
+                      size="sm"
+                    />
+                  </CardFooter>
+                </Card>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Latest Feature Discovery Section */}
+        <div className="mt-10">
+          <h2 className="text-2xl font-bold mb-4 tracking-tight flex items-center gap-2">
+            <Lightbulb className="h-6 w-6 text-amber-500" />
+            Latest feature discovery
+          </h2>
+          {isLoadingFeatures ? (
+            <div className="flex justify-center items-center h-32">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : featuresError ? (
+            <div className="p-4 text-red-600">Error loading features: {featuresError.message}</div>
+          ) : features.length === 0 ? (
+            <div className="p-4 text-muted-foreground">No features available.</div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {features.slice(0, 3).map((feature, index) => {
+                const lostDeals = [10, 6, 9, 12, 8, 14][index % 6];
+                return (
+                  <Card
+                    key={feature.id}
+                    className="flex flex-col h-full cursor-pointer hover:shadow-lg transition"
+                    onClick={() => navigate('/feature-discovery')}
+                  >
+                    <CardHeader className="flex flex-row items-center gap-2 pb-2">
+                      <Lightbulb className="h-6 w-6 text-amber-500 flex-shrink-0" />
+                      <CardTitle className="font-bold text-lg truncate flex-1">
+                        {feature.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-grow pb-2">
+                      <p className="text-gray-700 text-sm line-clamp-3">
+                        {feature.description || 'No description provided.'}
+                      </p>
+                    </CardContent>
+                    <CardFooter className="pt-2 border-t mt-auto flex justify-between items-center">
+                      <span className="text-xs flex items-center gap-1 font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+                        🔥 {lostDeals} Lost Deals
+                      </span>
+                      <ShareMenu
+                        title={feature.title || 'Feature Request'}
+                        contentPreview={feature.description || ''}
+                        variant="gradient"
+                        size="sm"
+                        onClick={e => e.stopPropagation()}
+                      />
+                    </CardFooter>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
       </div>
     </div>
   );
-} 
+}
